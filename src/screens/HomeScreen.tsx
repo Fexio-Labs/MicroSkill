@@ -1,61 +1,65 @@
 import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import SkillCard from '../components/SkillCard';
+import StatsHeader from '../components/StatsHeader';
 import { MOCK_MICRO_SKILLS } from '../data/microSkills';
 import { useSkillContext } from '../hooks/useSkillContext';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, spacing } from '../styles/theme';
+import { colors, radii, spacing } from '../styles/theme';
+
+type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function HomeScreen() {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<HomeNavigationProp>();
   const { score, level, getTodaysSkill, streak, completedSkills } = useSkillContext();
+  
+  // Günün Becerisi - Her gün farklı bir skill
   const todaysSkill = getTodaysSkill();
 
-  // Rastgele 3 premium skill seç
+  // Premium becerileri al (ilk 3 premium skill)
   const premiumSkills = React.useMemo(() => {
     const premium = MOCK_MICRO_SKILLS.filter(s => s.isPremium);
     return premium.slice(0, 3);
   }, []);
+
+  // Önerilen ücretsiz beceriler (henüz tamamlanmamış)
+  const recommendedSkills = React.useMemo(() => {
+    const free = MOCK_MICRO_SKILLS.filter(
+      s => !s.isPremium && !completedSkills.includes(s.id) && s.id !== todaysSkill.id
+    );
+    return free.slice(0, 2);
+  }, [completedSkills, todaysSkill.id]);
 
   return (
     <LinearGradient
       colors={[colors.background, colors.backgroundSecondary]}
       style={styles.gradientContainer}
     >
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           {/* Header Stats */}
-          <Animated.View entering={FadeInDown.delay(100)} style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{score}</Text>
-              <Text style={styles.statLabel}>Puan</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{level}</Text>
-              <Text style={styles.statLabel}>Seviye</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{streak}</Text>
-              <Text style={styles.statLabel}>🔥 Seri</Text>
-            </View>
-          </Animated.View>
+          <StatsHeader score={score} level={level} streak={streak} />
 
           {/* Günün Becerisi */}
           <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>🌟 Günün Becerisi</Text>
-              <Text style={styles.sectionSubtitle}>Her gün yeni bir şey öğren!</Text>
+            <View style={styles.sectionHeaderWithSubtitle}>
+              <View>
+                <Text style={styles.sectionTitle}>🌟 Günün Becerisi</Text>
+                <Text style={styles.sectionSubtitle}>Her gün yeni bir şey öğren!</Text>
+              </View>
             </View>
             <SkillCard 
               skill={todaysSkill}
+              isPremium={todaysSkill.isPremium}
               onPress={() => navigation.navigate('Lesson', { skillId: todaysSkill.id })}
             />
           </Animated.View>
@@ -64,10 +68,25 @@ export default function HomeScreen() {
           <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>💎 Premium İçerikler</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Premium')}>
+              <TouchableOpacity 
+                onPress={() => navigation.navigate('Premium')}
+                style={styles.seeAllButtonContainer}
+              >
                 <Text style={styles.seeAllButton}>Tümünü Gör →</Text>
               </TouchableOpacity>
             </View>
+            <TouchableOpacity 
+              style={styles.premiumInfo}
+              onPress={() => navigation.navigate('Payment')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.premiumInfoText}>
+                🚀 Yapay Zeka, Startup ve ileri seviye içerikler
+              </Text>
+              <Text style={styles.premiumInfoSubtext}>
+                Premium'a geçmek için tıkla →
+              </Text>
+            </TouchableOpacity>
             {premiumSkills.map((skill, index) => (
               <Animated.View 
                 key={skill.id} 
@@ -82,24 +101,32 @@ export default function HomeScreen() {
             ))}
           </Animated.View>
 
-          {/* Quick Actions */}
-          <Animated.View entering={FadeInDown.delay(600)} style={styles.quickActions}>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('Levels')}
-            >
-              <Text style={styles.actionButtonText}>📊 Seviyeler</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('Premium')}
-            >
-              <Text style={styles.actionButtonText}>💎 Premium</Text>
-            </TouchableOpacity>
-          </Animated.View>
+          {/* Önerilen Beceriler */}
+          {recommendedSkills.length > 0 && (
+            <Animated.View entering={FadeInDown.delay(700)} style={styles.section}>
+              <View style={styles.sectionHeaderWithSubtitle}>
+                <View>
+                  <Text style={styles.sectionTitle}>✨ Senin İçin Öneriler</Text>
+                  <Text style={styles.sectionSubtitle}>Ücretsiz beceriler</Text>
+                </View>
+              </View>
+              {recommendedSkills.map((skill, index) => (
+                <Animated.View 
+                  key={skill.id} 
+                  entering={FadeInUp.delay(800 + index * 100)}
+                >
+                  <SkillCard 
+                    skill={skill}
+                    isPremium={false}
+                    onPress={() => navigation.navigate('Lesson', { skillId: skill.id })}
+                  />
+                </Animated.View>
+              ))}
+            </Animated.View>
+          )}
 
           {/* Progress Info */}
-          <Animated.View entering={FadeInDown.delay(700)} style={styles.progressInfo}>
+          <Animated.View entering={FadeInDown.delay(900)} style={styles.progressInfo}>
             <Text style={styles.progressText}>
               🎯 {completedSkills.length} beceri tamamladın!
             </Text>
@@ -126,35 +153,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  
-  // Stats
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xl,
-    gap: spacing.sm,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: colors.primary,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    paddingBottom: spacing.xl * 2,
   },
 
   // Sections
@@ -165,49 +164,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  sectionHeaderWithSubtitle: {
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '900',
     color: colors.text,
+    marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
     color: colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  seeAllButtonContainer: {
+    paddingVertical: spacing.xs,
   },
   seeAllButton: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.primary,
   },
-
-  // Quick Actions
-  quickActions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: spacing.lg,
-    alignItems: 'center',
+  premiumInfo: {
+    backgroundColor: colors.premium + '10',
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.premium + '30',
   },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+  premiumInfoText: {
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.text,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  premiumInfoSubtext: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.premium,
+    textAlign: 'center',
   },
 
   // Progress Info
   progressInfo: {
     backgroundColor: colors.primary + '10',
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.lg,
     alignItems: 'center',
     borderWidth: 1,

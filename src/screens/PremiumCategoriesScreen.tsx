@@ -1,12 +1,16 @@
 import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import SkillCard from '../components/SkillCard';
 import { type CategoryType, MOCK_MICRO_SKILLS } from '../data/microSkills';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, spacing } from '../styles/theme';
+import { colors, radii, shadows, spacing } from '../styles/theme';
+
+type PremiumNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Premium'>;
 
 const CATEGORY_EMOJIS: Record<string, string> = {
   'Yapay Zeka': '🤖',
@@ -31,7 +35,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function PremiumCategoriesScreen() {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<PremiumNavigationProp>();
   const [selectedCategory, setSelectedCategory] = React.useState<CategoryType | 'Tümü'>('Tümü');
 
   // Kategorilere göre grupla
@@ -54,12 +58,16 @@ export default function PremiumCategoriesScreen() {
   const displayedSkills = categorizedSkills[selectedCategory] || [];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+    <LinearGradient
+      colors={[colors.background, colors.backgroundSecondary]}
+      style={styles.gradientContainer}
+    >
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(100)} style={styles.header}>
           <Text style={styles.headerTitle}>💎 Premium Kategoriler</Text>
@@ -92,7 +100,11 @@ export default function PremiumCategoriesScreen() {
               <Text style={styles.featureText}>Her hafta yeni içerikler</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.premiumButton}>
+          <TouchableOpacity 
+            style={styles.premiumButton}
+            onPress={() => navigation.navigate('Payment')}
+            activeOpacity={0.9}
+          >
             <Text style={styles.premiumButtonText}>Premium'a Geç - ₺29.99/ay</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -150,15 +162,18 @@ export default function PremiumCategoriesScreen() {
             </Animated.View>
           ))}
         </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   safeArea: { 
-    flex: 1, 
-    backgroundColor: colors.background,
+    flex: 1,
   },
   scrollView: {
     flex: 1,
@@ -188,11 +203,12 @@ const styles = StyleSheet.create({
   // Premium Info Card
   premiumInfoCard: {
     backgroundColor: colors.premium + '10',
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.xl,
     marginBottom: spacing.xl,
     borderWidth: 2,
     borderColor: colors.premium + '40',
+    ...shadows.md,
   },
   premiumInfoHeader: {
     flexDirection: 'row',
@@ -230,13 +246,13 @@ const styles = StyleSheet.create({
   premiumButton: {
     backgroundColor: colors.premium,
     paddingVertical: spacing.lg,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     alignItems: 'center',
     shadowColor: colors.premium,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 6,
   },
   premiumButtonText: {
     fontSize: 16,
@@ -263,7 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     backgroundColor: colors.surface,
     borderWidth: 2,
     borderColor: colors.border,

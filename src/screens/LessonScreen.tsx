@@ -1,4 +1,6 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
@@ -6,9 +8,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MOCK_MICRO_SKILLS } from '../data/microSkills';
 import { useSkillContext } from '../hooks/useSkillContext';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, spacing } from '../styles/theme';
+import { colors, radii, shadows, spacing } from '../styles/theme';
 
 type LessonRoute = RouteProp<RootStackParamList, 'Lesson'>;
+type LessonNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Lesson'>;
 
 const CATEGORY_EMOJIS: Record<string, string> = {
   'Yapay Zeka': '🤖',
@@ -23,8 +26,8 @@ const CATEGORY_EMOJIS: Record<string, string> = {
 
 export default function LessonScreen() {
   const { params } = useRoute<LessonRoute>();
-  const navigation = useNavigation();
-  const { canAccessPremium, upgradeToPremium } = useSkillContext();
+  const navigation = useNavigation<LessonNavigationProp>();
+  const { canAccessPremium } = useSkillContext();
   
   const skill = React.useMemo(
     () => MOCK_MICRO_SKILLS.find((s) => s.id === (params?.skillId ?? '')) ?? MOCK_MICRO_SKILLS[0],
@@ -44,25 +47,29 @@ export default function LessonScreen() {
           { 
             text: 'Premium\'a Geç', 
             onPress: () => {
-              upgradeToPremium();
-              Alert.alert('✨ Başarılı!', 'Premium özellikler aktif edildi!');
+              navigation.navigate('Payment');
             }
           },
         ]
       );
       return;
     }
-    // @ts-ignore
+    
+    // Navigate to Quiz screen with skillId parameter
     navigation.navigate('Quiz', { skillId: skill.id });
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+    <LinearGradient
+      colors={[colors.background, colors.backgroundSecondary]}
+      style={styles.gradientContainer}
+    >
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Header Card */}
         <Animated.View entering={FadeInDown.delay(100)} style={styles.headerCard}>
           <View style={styles.categoryBadge}>
@@ -150,15 +157,18 @@ export default function LessonScreen() {
             </Text>
           </TouchableOpacity>
         </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   safeArea: { 
-    flex: 1, 
-    backgroundColor: colors.background,
+    flex: 1,
   },
   scrollView: {
     flex: 1,
@@ -172,14 +182,12 @@ const styles = StyleSheet.create({
   // Header Card
   headerCard: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
+    borderRadius: radii.xxl,
     padding: spacing.xl,
     marginBottom: spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.lg,
   },
   categoryBadge: {
     flexDirection: 'row',
@@ -238,14 +246,12 @@ const styles = StyleSheet.create({
   // Sections
   section: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.sm,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -305,7 +311,7 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     backgroundColor: colors.primary,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.xl,
     alignItems: 'center',
     shadowColor: colors.primary,

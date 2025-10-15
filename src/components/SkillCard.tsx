@@ -3,7 +3,7 @@ import { StyleSheet, Text, TextStyle, TouchableOpacity, View, ViewStyle } from '
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import type { MicroSkill } from '../data/microSkills';
 import { useSkillContext } from '../hooks/useSkillContext';
-import { colors, spacing } from '../styles/theme';
+import { colors, radii, shadows, spacing } from '../styles/theme';
 
 type SkillCardProps = {
   skill: MicroSkill;
@@ -35,6 +35,7 @@ export default function SkillCard({ skill, isPremium = false, onPress }: SkillCa
       style={[
         styles.card, 
         animatedStyle,
+        isPremium && styles.cardPremium,
         !hasAccess && styles.cardLocked
       ]} 
       activeOpacity={hasAccess ? 1 : 0.6}
@@ -42,15 +43,28 @@ export default function SkillCard({ skill, isPremium = false, onPress }: SkillCa
       onPressIn={hasAccess ? handlePressIn : undefined}
       onPressOut={hasAccess ? handlePressOut : undefined}
     >
+      {/* Premium Badge Ribbon */}
+      {isPremium && !hasAccess && (
+        <View style={styles.premiumRibbon}>
+          <Text style={styles.premiumRibbonText}>🔒 Premium</Text>
+        </View>
+      )}
+      
+      {isPremium && hasAccess && (
+        <View style={styles.premiumRibbonUnlocked}>
+          <Text style={styles.premiumRibbonTextUnlocked}>💎 Premium</Text>
+        </View>
+      )}
+
       <View style={styles.headerRow}>
         <Text style={styles.title} numberOfLines={2}>
           {skill.title}
         </Text>
-        <View style={[styles.badge, isPremium ? styles.badgePremium : styles.badgeFree]}>
-          <Text style={[styles.badgeText, isPremium ? styles.badgeTextPremium : styles.badgeTextFree]}>
-            {isPremium ? '💎 Premium' : '✓ Ücretsiz'}
-          </Text>
-        </View>
+        {!isPremium && (
+          <View style={styles.badgeFree}>
+            <Text style={styles.badgeTextFree}>✓ Ücretsiz</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.metaRow}>
@@ -79,14 +93,15 @@ export default function SkillCard({ skill, isPremium = false, onPress }: SkillCa
 
 type Styles = {
   card: ViewStyle;
+  cardPremium: ViewStyle;
   cardLocked: ViewStyle;
+  premiumRibbon: ViewStyle;
+  premiumRibbonText: TextStyle;
+  premiumRibbonUnlocked: ViewStyle;
+  premiumRibbonTextUnlocked: TextStyle;
   headerRow: ViewStyle;
   title: TextStyle;
-  badge: ViewStyle;
-  badgePremium: ViewStyle;
   badgeFree: ViewStyle;
-  badgeText: TextStyle;
-  badgeTextPremium: TextStyle;
   badgeTextFree: TextStyle;
   metaRow: ViewStyle;
   meta: TextStyle;
@@ -100,20 +115,67 @@ type Styles = {
 const styles = StyleSheet.create<Styles>({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     marginVertical: spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: 'hidden',
+    position: 'relative',
+    ...shadows.md,
+  },
+  cardPremium: {
+    borderColor: colors.premium,
+    borderWidth: 2,
+    backgroundColor: colors.surface,
   },
   cardLocked: {
-    opacity: 0.7,
+    opacity: 0.85,
     backgroundColor: colors.backgroundTertiary,
+  },
+  premiumRibbon: {
+    position: 'absolute',
+    top: 12,
+    right: -32,
+    backgroundColor: colors.premium,
+    paddingVertical: 6,
+    paddingHorizontal: 40,
+    transform: [{ rotate: '45deg' }],
+    zIndex: 10,
+    shadowColor: colors.premium,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  premiumRibbonText: {
+    color: colors.textInverted,
+    fontSize: 11,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  premiumRibbonUnlocked: {
+    position: 'absolute',
+    top: 12,
+    right: -32,
+    backgroundColor: colors.primary,
+    paddingVertical: 6,
+    paddingHorizontal: 40,
+    transform: [{ rotate: '45deg' }],
+    zIndex: 10,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  premiumRibbonTextUnlocked: {
+    color: colors.textInverted,
+    fontSize: 11,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
   headerRow: {
     flexDirection: 'row',
@@ -127,31 +189,19 @@ const styles = StyleSheet.create<Styles>({
     color: colors.text,
     lineHeight: 24,
   },
-  badge: {
+  badgeFree: {
     marginLeft: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: 12,
-  },
-  badgePremium: {
-    backgroundColor: colors.premiumLight,
-    borderWidth: 1.5,
-    borderColor: colors.premium,
-  },
-  badgeFree: {
     backgroundColor: colors.successLight + '30',
     borderWidth: 1.5,
     borderColor: colors.success,
   },
-  badgeText: {
+  badgeTextFree: {
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.3,
-  },
-  badgeTextPremium: {
-    color: colors.premium,
-  },
-  badgeTextFree: {
     color: colors.successDark,
   },
   metaRow: {

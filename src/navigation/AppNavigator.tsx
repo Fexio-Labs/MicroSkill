@@ -1,11 +1,18 @@
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
+import AnimatedTabBar from '../components/AnimatedTabBar';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import HomeScreen from '../screens/HomeScreen';
+import LanguageSettingsScreen from '../screens/LanguageSettingsScreen';
 import LessonScreen from '../screens/LessonScreen';
 import LevelScreen from '../screens/LevelScreen';
+import PaymentScreen from '../screens/PaymentScreen';
 import PremiumCategoriesScreen from '../screens/PremiumCategoriesScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import QuizResultScreen from '../screens/QuizResultScreen';
 import QuizScreen from '../screens/QuizScreen';
+import SkillsScreen from '../screens/SkillsScreen';
 import { colors } from '../styles/theme';
 
 // Root stack route params
@@ -15,24 +22,56 @@ export type RootStackParamList = {
   Lesson: { skillId: string } | undefined;
   Level: undefined;
   Premium: undefined;
-  QuizResult: undefined;
+  Payment: undefined;
+  QuizResult: {
+    earnedPoints: number;
+    correctAnswers: number;
+    totalQuestions: number;
+    skillTitle: string;
+  };
+  Skills: undefined;
+  Profile: undefined;
+  EditProfile: undefined;
+  LanguageSettings: undefined;
+};
+
+// Tab Navigator params
+export type TabParamList = {
+  HomeTab: undefined;
+  SkillsTab: undefined;
+  PremiumTab: undefined;
+  ProfileTab: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<TabParamList>();
 
-export default function AppNavigator() {
+// Common Stack Screen Options with Animations
+const stackScreenOptions = {
+  headerStyle: {
+    backgroundColor: colors.surface,
+  },
+  headerTintColor: colors.primary,
+  headerTitleStyle: {
+    fontWeight: '800',
+    fontSize: 18,
+  },
+  headerShadowVisible: false,
+  headerBackTitleVisible: false,
+  // Modern slide animations
+  animation: 'slide_from_right' as const,
+  animationDuration: 300,
+  // Gesture configuration
+  gestureEnabled: true,
+  gestureDirection: 'horizontal' as const,
+  fullScreenGestureEnabled: true,
+};
+
+// Home Stack
+function HomeStack() {
   return (
     <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: colors.surface,
-        },
-        headerTintColor: colors.primary,
-        headerTitleStyle: {
-          fontWeight: '800',
-        },
-        headerShadowVisible: true,
-      }}
+      screenOptions={stackScreenOptions}
     >
       <Stack.Screen 
         name="Home" 
@@ -76,14 +115,207 @@ export default function AppNavigator() {
         }}
       />
       <Stack.Screen 
+        name="Payment" 
+        component={PaymentScreen}
+        options={{
+          title: '💎 Premium',
+          headerBackTitle: 'Geri',
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Skills Stack
+function SkillsStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={stackScreenOptions}
+    >
+      <Stack.Screen 
+        name="Skills" 
+        component={SkillsScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen 
+        name="Lesson" 
+        component={LessonScreen}
+        options={{
+          title: 'Ders',
+          headerBackTitle: 'Geri',
+        }}
+      />
+      <Stack.Screen 
+        name="Quiz" 
+        component={QuizScreen}
+        options={{
+          title: 'Quiz',
+          headerBackTitle: 'Geri',
+          animation: 'fade_from_bottom',
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen 
+        name="QuizResult" 
+        component={QuizResultScreen}
+        options={{
+          title: 'Sonuçlar',
+          headerBackVisible: false,
+          gestureEnabled: false,
+          animation: 'fade',
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen 
+        name="Payment" 
+        component={PaymentScreen}
+        options={{
+          title: '💎 Premium',
+          headerBackTitle: 'Geri',
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Premium Stack
+function PremiumStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={stackScreenOptions}
+    >
+      <Stack.Screen 
         name="Premium" 
         component={PremiumCategoriesScreen}
         options={{
-          title: 'Premium',
+          title: '💎 Premium',
+          headerLargeTitle: false,
+        }}
+      />
+      <Stack.Screen 
+        name="Lesson" 
+        component={LessonScreen}
+        options={{
+          title: 'Ders',
+          headerBackTitle: 'Geri',
+        }}
+      />
+      <Stack.Screen 
+        name="Quiz" 
+        component={QuizScreen}
+        options={{
+          title: 'Quiz',
+          headerBackTitle: 'Geri',
+          animation: 'fade_from_bottom',
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen 
+        name="QuizResult" 
+        component={QuizResultScreen}
+        options={{
+          title: 'Sonuçlar',
+          headerBackVisible: false,
+          gestureEnabled: false,
+          animation: 'fade',
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen 
+        name="Payment" 
+        component={PaymentScreen}
+        options={{
+          title: '💎 Premium',
+          headerBackTitle: 'Geri',
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Profile Stack
+function ProfileStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={stackScreenOptions}
+    >
+      <Stack.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen 
+        name="EditProfile" 
+        component={EditProfileScreen}
+        options={{
+          title: 'Profili Düzenle',
+          headerBackTitle: 'Geri',
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen 
+        name="LanguageSettings" 
+        component={LanguageSettingsScreen}
+        options={{
+          title: '🌐 Dil Ayarları',
           headerBackTitle: 'Geri',
         }}
       />
     </Stack.Navigator>
+  );
+}
+
+// Main Tab Navigator
+export default function AppNavigator() {
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <AnimatedTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textTertiary,
+      }}
+    >
+      <Tab.Screen 
+        name="HomeTab" 
+        component={HomeStack}
+        options={{
+          title: 'Ana Sayfa',
+        }}
+      />
+      <Tab.Screen 
+        name="SkillsTab" 
+        component={SkillsStack}
+        options={{
+          title: 'Beceriler',
+        }}
+      />
+      <Tab.Screen 
+        name="PremiumTab" 
+        component={PremiumStack}
+        options={{
+          title: 'Premium',
+        }}
+      />
+      <Tab.Screen 
+        name="ProfileTab" 
+        component={ProfileStack}
+        options={{
+          title: 'Profil',
+        }}
+      />
+    </Tab.Navigator>
   );
 }
 

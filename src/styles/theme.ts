@@ -34,6 +34,7 @@ export const colors = {
   background: '#0F172A',
   backgroundSecondary: '#1E293B',
   backgroundTertiary: '#334155',
+  backgroundDark: '#0A0F1E',
   surface: '#1E293B',
   surfaceElevated: '#334155',
   
@@ -73,9 +74,11 @@ export const spacing = {
 };
 
 export const radii = {
-  sm: 6,
-  md: 10,
-  lg: 14,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
   full: 9999,
 };
 
@@ -87,7 +90,8 @@ export const typography = {
     md: 16,
     lg: 18,
     xl: 22,
-    xxl: 26,
+    xxl: 28,
+    xxxl: 32,
   },
   lineHeight: {
     xs: 16,
@@ -95,8 +99,57 @@ export const typography = {
     md: 22,
     lg: 24,
     xl: 28,
-    xxl: 32,
+    xxl: 36,
+    xxxl: 40,
   },
+  fontWeight: {
+    regular: '400' as const,
+    medium: '500' as const,
+    semibold: '600' as const,
+    bold: '700' as const,
+    extrabold: '800' as const,
+    black: '900' as const,
+  },
+};
+
+// Shadow presets for consistent elevation
+export const shadows = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  xl: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+};
+
+// Animation durations for consistency
+export const animations = {
+  fast: 150,
+  normal: 300,
+  slow: 500,
+  verySlow: 800,
 };
 
 export type Theme = {
@@ -104,6 +157,8 @@ export type Theme = {
   spacing: typeof spacing;
   radii: typeof radii;
   typography: typeof typography;
+  shadows: typeof shadows;
+  animations: typeof animations;
 };
 
 export const theme: Theme = {
@@ -111,6 +166,8 @@ export const theme: Theme = {
   spacing,
   radii,
   typography,
+  shadows,
+  animations,
 };
 
 

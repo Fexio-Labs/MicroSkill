@@ -1,19 +1,30 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  Easing,
+  FadeInDown,
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming
+} from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import OptionButton, { OptionState } from '../components/OptionButton';
 import { MOCK_MICRO_SKILLS } from '../data/microSkills';
 import { useSkillContext } from '../hooks/useSkillContext';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, spacing } from '../styles/theme';
+import { colors, radii, shadows, spacing } from '../styles/theme';
 
 type QuizRoute = RouteProp<RootStackParamList, 'Quiz'>;
+type QuizNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Quiz'>;
 
 export default function QuizScreen() {
   const { params } = useRoute<QuizRoute>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<QuizNavigationProp>();
   const { addScore } = useSkillContext();
   const skill = React.useMemo(
     () => MOCK_MICRO_SKILLS.find((s) => s.id === (params?.skillId ?? '')) ?? MOCK_MICRO_SKILLS[0],
@@ -24,30 +35,79 @@ export default function QuizScreen() {
 
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
   const [state, setState] = React.useState<OptionState>('unanswered');
+  
+  // Quiz sonuç takibi
+  const [correctAnswersCount, setCorrectAnswersCount] = React.useState(0);
+  const [earnedPoints, setEarnedPoints] = React.useState(0);
 
-  const handleSelect = (index: number) => {
+  // Progress bar animation
+  const progressWidth = useSharedValue(0);
+  
+  // ScrollView ref for auto-scroll to explanation
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    // Animate progress bar when question changes
+    const targetProgress = ((currentQuestionIndex + 1) / skill.quiz.length) * 100;
+    progressWidth.value = withTiming(targetProgress, {
+      duration: 600,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [currentQuestionIndex, skill.quiz.length, progressWidth]);
+
+  const progressBarStyle = useAnimatedStyle(() => ({
+    width: `${progressWidth.value}%`,
+  }));
+
+  const handleSelect = async (index: number) => {
     if (selectedIndex !== null) return;
+    
+    // Cevabı işaretle
     setSelectedIndex(index);
     const isCorrect = index === question.correctOptionIndex;
     setState(isCorrect ? 'correct' : 'incorrect');
     
+    // Haptic Feedback - Cihaz titreşimi
     if (isCorrect) {
-      addScore(10, skill.id);
+      // Doğru cevap için yumuşak başarı titreşimi
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const pointsEarned = 10;
+      addScore(pointsEarned, skill.id);
+      
+      // Kazanılan puanları ve doğru cevap sayısını kaydet
+      setEarnedPoints(prev => prev + pointsEarned);
+      setCorrectAnswersCount(prev => prev + 1);
+    } else {
+      // Yanlış cevap için hata titreşimi
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
 
-    // 1.2 saniye sonra sonraki soruya geç
+    // Açıklama kartına scroll et
     setTimeout(() => {
-      if (currentQuestionIndex < skill.quiz.length - 1) {
-        // Sonraki soru
-        setCurrentQuestionIndex(prev => prev + 1);
-        setSelectedIndex(null);
-        setState('unanswered');
-      } else {
-        // Quiz bitti
-        // @ts-ignore untyped navigate on web
-        navigation.navigate('QuizResult' as never);
-      }
-    }, 1200);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 600);
+  };
+
+  const handleContinue = async () => {
+    const isCorrect = selectedIndex === question.correctOptionIndex;
+    
+    // Butona tıklama haptic feedback
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    if (currentQuestionIndex < skill.quiz.length - 1) {
+      // Sonraki soruya geç
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedIndex(null);
+      setState('unanswered');
+    } else {
+      // Quiz bitti - Navigate to QuizResult screen with results
+      navigation.navigate('QuizResult', {
+        earnedPoints: earnedPoints + (isCorrect ? 10 : 0),
+        correctAnswers: correctAnswersCount + (isCorrect ? 1 : 0),
+        totalQuestions: skill.quiz.length,
+        skillTitle: skill.title,
+      });
+    }
   };
 
   return (
@@ -55,8 +115,9 @@ export default function QuizScreen() {
       colors={[colors.background, colors.backgroundSecondary]}
       style={styles.gradientContainer}
     >
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView 
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -64,15 +125,15 @@ export default function QuizScreen() {
           {/* Progress Bar */}
           <Animated.View entering={FadeInDown.delay(100)} style={styles.progressContainer}>
             <View style={styles.progressBar}>
-              <View 
+              <Animated.View 
                 style={[
                   styles.progressFill,
-                  { width: `${((currentQuestionIndex + 1) / skill.quiz.length) * 100}%` }
+                  progressBarStyle
                 ]}
               />
             </View>
             <Text style={styles.progressText}>
-              {currentQuestionIndex + 1} / {skill.quiz.length}
+              Soru {currentQuestionIndex + 1} / {skill.quiz.length}
             </Text>
           </Animated.View>
 
@@ -109,14 +170,76 @@ export default function QuizScreen() {
             })}
           </Animated.View>
 
-          {/* Explanation (if answered) */}
+          {/* Explanation Card - Shows after answer is selected */}
           {selectedIndex !== null && question.explanation && (
-            <Animated.View entering={FadeInDown.delay(400)} style={styles.explanationCard}>
+            <Animated.View 
+              entering={FadeInDown.delay(500).springify().damping(15)} 
+              style={[
+                styles.explanationCard,
+                state === 'correct' ? styles.explanationCorrect : styles.explanationIncorrect
+              ]}
+            >
               <View style={styles.explanationHeader}>
-                <Text style={styles.explanationIcon}>💡</Text>
-                <Text style={styles.explanationTitle}>Açıklama</Text>
+                <View style={[
+                  styles.explanationIconContainer,
+                  state === 'correct' ? styles.iconContainerCorrect : styles.iconContainerIncorrect
+                ]}>
+                  <Text style={styles.explanationIcon}>
+                    {state === 'correct' ? '✅' : '💡'}
+                  </Text>
+                </View>
+                <View style={styles.explanationTitleContainer}>
+                  <Text style={[
+                    styles.explanationTitle,
+                    state === 'correct' ? styles.titleCorrect : styles.titleIncorrect
+                  ]}>
+                    {state === 'correct' ? 'Doğru Cevap!' : 'Öğrenelim'}
+                  </Text>
+                  <Text style={styles.explanationSubtitle}>
+                    {state === 'correct' 
+                      ? 'Harika! İşte detaylar...' 
+                      : 'İşte doğru açıklama...'}
+                  </Text>
+                </View>
               </View>
-              <Text style={styles.explanationText}>{question.explanation}</Text>
+              
+              {/* Correct Answer Display */}
+              {state === 'incorrect' && (
+                <View style={styles.correctAnswerSection}>
+                  <Text style={styles.correctAnswerLabel}>Doğru Cevap:</Text>
+                  <Text style={styles.correctAnswerText}>
+                    {question.options[question.correctOptionIndex]}
+                  </Text>
+                </View>
+              )}
+
+              {/* Explanation Text */}
+              <View style={styles.explanationContent}>
+                <Text style={styles.explanationText}>{question.explanation}</Text>
+              </View>
+
+              {/* Bottom Badge */}
+              <View style={styles.explanationFooter}>
+                <Text style={styles.footerText}>
+                  {state === 'correct' ? '🎯 +10 Puan Kazandın!' : '📚 Doğru cevabı öğrendin!'}
+                </Text>
+              </View>
+
+              {/* Continue Button */}
+              <Animated.View entering={FadeInUp.delay(200)}>
+                <TouchableOpacity
+                  style={[
+                    styles.continueButton,
+                    state === 'correct' ? styles.continueButtonSuccess : styles.continueButtonWarning
+                  ]}
+                  onPress={handleContinue}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.continueButtonText}>
+                    {currentQuestionIndex < skill.quiz.length - 1 ? 'Sonraki Soru →' : 'Sonuçları Gör 🎉'}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
             </Animated.View>
           )}
         </ScrollView>
@@ -168,11 +291,12 @@ const styles = StyleSheet.create({
   // Question Card
   questionCard: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.xl,
     marginBottom: spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
+    ...shadows.md,
   },
   skillHeader: {
     marginBottom: spacing.lg,
@@ -203,31 +327,134 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
 
-  // Explanation
+  // Explanation Card
   explanationCard: {
-    backgroundColor: colors.accent + '10',
-    borderRadius: 16,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.accent + '30',
+    borderRadius: radii.xl,
+    padding: spacing.xl,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
+    borderWidth: 2,
+    ...shadows.lg,
+  },
+  explanationCorrect: {
+    backgroundColor: colors.success + '15',
+    borderColor: colors.success,
+  },
+  explanationIncorrect: {
+    backgroundColor: colors.warning + '10',
+    borderColor: colors.warning,
   },
   explanationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  explanationIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  iconContainerCorrect: {
+    backgroundColor: colors.success + '30',
+  },
+  iconContainerIncorrect: {
+    backgroundColor: colors.warning + '30',
   },
   explanationIcon: {
-    fontSize: 20,
-    marginRight: spacing.sm,
+    fontSize: 24,
+  },
+  explanationTitleContainer: {
+    flex: 1,
   },
   explanationTitle: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 2,
+  },
+  titleCorrect: {
+    color: colors.success,
+  },
+  titleIncorrect: {
+    color: colors.warning,
+  },
+  explanationSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  correctAnswerSection: {
+    backgroundColor: colors.success + '10',
+    borderRadius: radii.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.success,
+  },
+  correctAnswerLabel: {
+    fontSize: 12,
     fontWeight: '700',
-    color: colors.accent,
+    color: colors.success,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  correctAnswerText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+    lineHeight: 22,
+  },
+  explanationContent: {
+    marginBottom: spacing.md,
   },
   explanationText: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.text,
-    lineHeight: 20,
+    lineHeight: 24,
+    fontWeight: '500',
+  },
+  explanationFooter: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  
+  // Continue Button
+  continueButton: {
+    marginTop: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  continueButtonSuccess: {
+    backgroundColor: colors.success,
+  },
+  continueButtonWarning: {
+    backgroundColor: colors.primary,
+  },
+  continueButtonText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.textInverted,
+    letterSpacing: 0.5,
   },
 });

@@ -1,9 +1,10 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSkillContext } from '../hooks/useSkillContext';
-import { colors, spacing } from '../styles/theme';
+import { colors, radii, shadows, spacing } from '../styles/theme';
 
 const LevelScreen: React.FC = () => {
   const { level, score, completedSkills, streak } = useSkillContext();
@@ -20,11 +21,15 @@ const LevelScreen: React.FC = () => {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+    <LinearGradient
+      colors={[colors.background, colors.backgroundSecondary]}
+      style={styles.gradientContainer}
+    >
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(100)} style={styles.header}>
           <Text style={styles.headerTitle}>📊 Seviye & İstatistikler</Text>
@@ -99,15 +104,18 @@ const LevelScreen: React.FC = () => {
             </View>
           </View>
         </Animated.View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  gradientContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
@@ -134,15 +142,13 @@ const styles = StyleSheet.create({
   // Level Card
   levelCard: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
+    borderRadius: radii.xxl,
     padding: spacing.xl,
     marginBottom: spacing.xl,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.lg,
   },
   levelBadge: {
     backgroundColor: colors.primaryLight + '30',
@@ -220,14 +226,12 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: spacing.lg,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.sm,
   },
   statEmoji: {
     fontSize: 28,
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
   achievementCard: {
     width: '48%',
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: spacing.lg,
     alignItems: 'center',
     opacity: 0.5,
@@ -274,11 +278,7 @@ const styles = StyleSheet.create({
   achievementUnlocked: {
     opacity: 1,
     borderColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 3,
+    ...shadows.md,
   },
   achievementIcon: {
     fontSize: 32,

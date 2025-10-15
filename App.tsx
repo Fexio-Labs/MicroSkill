@@ -1,19 +1,42 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableScreens } from 'react-native-screens';
 import { SkillProvider, useSkillContext } from './src/hooks/useSkillContext';
+import { UserProfileProvider } from './src/hooks/useUserProfile';
 import AppNavigator from './src/navigation/AppNavigator';
+import OnboardingScreen, { ONBOARDING_STORAGE_KEY } from './src/screens/OnboardingScreen';
 import { colors } from './src/styles/theme';
 
 enableScreens(true);
 
 function AppContent() {
   const { isLoading } = useSkillContext();
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    checkOnboarding();
+  }, []);
+
+  const checkOnboarding = async () => {
+    try {
+      const hasSeenOnboarding = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
+      setShowOnboarding(hasSeenOnboarding !== 'true');
+    } catch (error) {
+      console.error('Error checking onboarding:', error);
+      setShowOnboarding(false);
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+  };
   
-  if (isLoading) {
+  // Loading state
+  if (isLoading || showOnboarding === null) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.logo}>🎓</Text>
@@ -22,6 +45,11 @@ function AppContent() {
         <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
       </View>
     );
+  }
+
+  // Show onboarding for first-time users
+  if (showOnboarding) {
+    return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
   
   return (
@@ -64,9 +92,11 @@ function AppContent() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <SkillProvider>
-        <AppContent />
-      </SkillProvider>
+      <UserProfileProvider>
+        <SkillProvider>
+          <AppContent />
+        </SkillProvider>
+      </UserProfileProvider>
     </SafeAreaProvider>
   );
 }
