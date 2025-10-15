@@ -5,7 +5,6 @@ import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } fr
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import SkillCard from '../components/SkillCard';
 import { type CategoryType, MOCK_MICRO_SKILLS } from '../data/microSkills';
-import { useSkillContext } from '../hooks/useSkillContext';
 import type { RootStackParamList } from '../navigation/AppNavigator';
 import { colors, spacing } from '../styles/theme';
 
@@ -33,7 +32,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function PremiumCategoriesScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { isPremium, upgradeToPremium } = useSkillContext();
   const [selectedCategory, setSelectedCategory] = React.useState<CategoryType | 'Tümü'>('Tümü');
 
   // Kategorilere göre grupla
@@ -94,18 +92,9 @@ export default function PremiumCategoriesScreen() {
               <Text style={styles.featureText}>Her hafta yeni içerikler</Text>
             </View>
           </View>
-          {!isPremium ? (
-            <TouchableOpacity 
-              style={styles.premiumButton}
-              onPress={upgradeToPremium}
-            >
-              <Text style={styles.premiumButtonText}>Premium'a Geç - ₺29.99/ay</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.premiumActiveButton}>
-              <Text style={styles.premiumActiveText}>✨ Premium Aktif</Text>
-            </View>
-          )}
+          <TouchableOpacity style={styles.premiumButton}>
+            <Text style={styles.premiumButtonText}>Premium'a Geç - ₺29.99/ay</Text>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Category Filter */}
@@ -253,19 +242,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: colors.textInverted,
-  },
-  premiumActiveButton: {
-    backgroundColor: colors.success + '20',
-    paddingVertical: spacing.lg,
-    borderRadius: 16,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.success,
-  },
-  premiumActiveText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.success,
   },
 
   // Category Filter
