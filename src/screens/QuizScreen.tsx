@@ -16,8 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import OptionButton, { OptionState } from '../components/OptionButton';
 import { MOCK_MICRO_SKILLS } from '../data/microSkills';
 import { useSkillContext } from '../hooks/useSkillContext';
+import { useTheme } from '../hooks/useTheme';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, radii, shadows, spacing } from '../styles/theme';
+import { radii, shadows, spacing } from '../styles/theme';
 
 type QuizRoute = RouteProp<RootStackParamList, 'Quiz'>;
 type QuizNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Quiz'>;
@@ -26,6 +27,7 @@ export default function QuizScreen() {
   const { params } = useRoute<QuizRoute>();
   const navigation = useNavigation<QuizNavigationProp>();
   const { addScore } = useSkillContext();
+  const { theme } = useTheme();
   const skill = React.useMemo(
     () => MOCK_MICRO_SKILLS.find((s) => s.id === (params?.skillId ?? '')) ?? MOCK_MICRO_SKILLS[0],
     [params?.skillId]
@@ -112,7 +114,7 @@ export default function QuizScreen() {
 
   return (
     <LinearGradient
-      colors={[colors.background, colors.backgroundSecondary]}
+      colors={[theme.background, theme.backgroundSecondary]}
       style={styles.gradientContainer}
     >
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -124,26 +126,30 @@ export default function QuizScreen() {
         >
           {/* Progress Bar */}
           <Animated.View entering={FadeInDown.delay(100)} style={styles.progressContainer}>
-            <View style={styles.progressBar}>
+            <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
               <Animated.View 
                 style={[
                   styles.progressFill,
+                  { backgroundColor: theme.primary },
                   progressBarStyle
                 ]}
               />
             </View>
-            <Text style={styles.progressText}>
+            <Text style={[styles.progressText, { color: theme.textSecondary }]}>
               Soru {currentQuestionIndex + 1} / {skill.quiz.length}
             </Text>
           </Animated.View>
 
           {/* Question Card */}
-          <Animated.View entering={FadeInDown.delay(200)} style={styles.questionCard}>
+          <Animated.View entering={FadeInDown.delay(200)} style={[styles.questionCard, {
+            backgroundColor: theme.surface,
+            borderColor: theme.border
+          }]}>
             <View style={styles.skillHeader}>
-              <Text style={styles.skillCategory}>{skill.category}</Text>
-              <Text style={styles.skillTitle}>{skill.title}</Text>
+              <Text style={[styles.skillCategory, { color: theme.primary }]}>{skill.category}</Text>
+              <Text style={[styles.skillTitle, { color: theme.text }]}>{skill.title}</Text>
             </View>
-            <Text style={styles.questionText}>{question.question}</Text>
+            <Text style={[styles.questionText, { color: theme.text }]}>{question.question}</Text>
           </Animated.View>
 
           {/* Options */}
@@ -176,13 +182,23 @@ export default function QuizScreen() {
               entering={FadeInDown.delay(500).springify().damping(15)} 
               style={[
                 styles.explanationCard,
-                state === 'correct' ? styles.explanationCorrect : styles.explanationIncorrect
+                state === 'correct' ? [styles.explanationCorrect, {
+                  backgroundColor: theme.success + '15',
+                  borderColor: theme.success
+                }] : [styles.explanationIncorrect, {
+                  backgroundColor: theme.warning + '10',
+                  borderColor: theme.warning
+                }]
               ]}
             >
-              <View style={styles.explanationHeader}>
+              <View style={[styles.explanationHeader, { borderBottomColor: theme.border }]}>
                 <View style={[
                   styles.explanationIconContainer,
-                  state === 'correct' ? styles.iconContainerCorrect : styles.iconContainerIncorrect
+                  state === 'correct' ? [styles.iconContainerCorrect, {
+                    backgroundColor: theme.success + '30'
+                  }] : [styles.iconContainerIncorrect, {
+                    backgroundColor: theme.warning + '30'
+                  }]
                 ]}>
                   <Text style={styles.explanationIcon}>
                     {state === 'correct' ? '✅' : '💡'}
@@ -191,11 +207,11 @@ export default function QuizScreen() {
                 <View style={styles.explanationTitleContainer}>
                   <Text style={[
                     styles.explanationTitle,
-                    state === 'correct' ? styles.titleCorrect : styles.titleIncorrect
+                    state === 'correct' ? [styles.titleCorrect, { color: theme.success }] : [styles.titleIncorrect, { color: theme.warning }]
                   ]}>
                     {state === 'correct' ? 'Doğru Cevap!' : 'Öğrenelim'}
                   </Text>
-                  <Text style={styles.explanationSubtitle}>
+                  <Text style={[styles.explanationSubtitle, { color: theme.textSecondary }]}>
                     {state === 'correct' 
                       ? 'Harika! İşte detaylar...' 
                       : 'İşte doğru açıklama...'}
@@ -205,9 +221,12 @@ export default function QuizScreen() {
               
               {/* Correct Answer Display */}
               {state === 'incorrect' && (
-                <View style={styles.correctAnswerSection}>
-                  <Text style={styles.correctAnswerLabel}>Doğru Cevap:</Text>
-                  <Text style={styles.correctAnswerText}>
+                <View style={[styles.correctAnswerSection, {
+                  backgroundColor: theme.success + '10',
+                  borderLeftColor: theme.success
+                }]}>
+                  <Text style={[styles.correctAnswerLabel, { color: theme.success }]}>Doğru Cevap:</Text>
+                  <Text style={[styles.correctAnswerText, { color: theme.text }]}>
                     {question.options[question.correctOptionIndex]}
                   </Text>
                 </View>
@@ -215,12 +234,12 @@ export default function QuizScreen() {
 
               {/* Explanation Text */}
               <View style={styles.explanationContent}>
-                <Text style={styles.explanationText}>{question.explanation}</Text>
+                <Text style={[styles.explanationText, { color: theme.text }]}>{question.explanation}</Text>
               </View>
 
               {/* Bottom Badge */}
-              <View style={styles.explanationFooter}>
-                <Text style={styles.footerText}>
+              <View style={[styles.explanationFooter, { borderTopColor: theme.border }]}>
+                <Text style={[styles.footerText, { color: theme.primary }]}>
                   {state === 'correct' ? '🎯 +10 Puan Kazandın!' : '📚 Doğru cevabı öğrendin!'}
                 </Text>
               </View>
@@ -230,12 +249,16 @@ export default function QuizScreen() {
                 <TouchableOpacity
                   style={[
                     styles.continueButton,
-                    state === 'correct' ? styles.continueButtonSuccess : styles.continueButtonWarning
+                    state === 'correct' ? [styles.continueButtonSuccess, {
+                      backgroundColor: theme.success
+                    }] : [styles.continueButtonWarning, {
+                      backgroundColor: theme.primary
+                    }]
                   ]}
                   onPress={handleContinue}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.continueButtonText}>
+                  <Text style={[styles.continueButtonText, { color: theme.textInverted }]}>
                     {currentQuestionIndex < skill.quiz.length - 1 ? 'Sonraki Soru →' : 'Sonuçları Gör 🎉'}
                   </Text>
                 </TouchableOpacity>
@@ -272,30 +295,25 @@ const styles = StyleSheet.create({
   progressBar: {
     width: '100%',
     height: 8,
-    backgroundColor: colors.border,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: spacing.sm,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.primary,
     borderRadius: 4,
   },
   progressText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
 
   // Question Card
   questionCard: {
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.xl,
     marginBottom: spacing.xl,
     borderWidth: 1,
-    borderColor: colors.border,
     ...shadows.md,
   },
   skillHeader: {
@@ -304,19 +322,16 @@ const styles = StyleSheet.create({
   skillCategory: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
     marginBottom: 4,
   },
   skillTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.text,
     lineHeight: 24,
   },
   questionText: {
     fontSize: 20,
     fontWeight: '700',
-    color: colors.text,
     lineHeight: 28,
     textAlign: 'center',
   },
@@ -337,12 +352,8 @@ const styles = StyleSheet.create({
     ...shadows.lg,
   },
   explanationCorrect: {
-    backgroundColor: colors.success + '15',
-    borderColor: colors.success,
   },
   explanationIncorrect: {
-    backgroundColor: colors.warning + '10',
-    borderColor: colors.warning,
   },
   explanationHeader: {
     flexDirection: 'row',
@@ -350,7 +361,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   explanationIconContainer: {
     width: 48,
@@ -361,10 +371,8 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   iconContainerCorrect: {
-    backgroundColor: colors.success + '30',
   },
   iconContainerIncorrect: {
-    backgroundColor: colors.warning + '30',
   },
   explanationIcon: {
     fontSize: 24,
@@ -378,28 +386,22 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   titleCorrect: {
-    color: colors.success,
   },
   titleIncorrect: {
-    color: colors.warning,
   },
   explanationSubtitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   correctAnswerSection: {
-    backgroundColor: colors.success + '10',
     borderRadius: radii.md,
     padding: spacing.md,
     marginBottom: spacing.lg,
     borderLeftWidth: 4,
-    borderLeftColor: colors.success,
   },
   correctAnswerLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.success,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -407,7 +409,6 @@ const styles = StyleSheet.create({
   correctAnswerText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.text,
     lineHeight: 22,
   },
   explanationContent: {
@@ -415,7 +416,6 @@ const styles = StyleSheet.create({
   },
   explanationText: {
     fontSize: 15,
-    color: colors.text,
     lineHeight: 24,
     fontWeight: '500',
   },
@@ -423,13 +423,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
     alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.primary,
   },
   
   // Continue Button
@@ -446,15 +444,12 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   continueButtonSuccess: {
-    backgroundColor: colors.success,
   },
   continueButtonWarning: {
-    backgroundColor: colors.primary,
   },
   continueButtonText: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.textInverted,
     letterSpacing: 0.5,
   },
 });
