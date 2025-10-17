@@ -3,11 +3,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   FadeInDown,
-  FadeInLeft,
   FadeInRight,
   FadeInUp,
   useAnimatedStyle,
@@ -42,6 +41,114 @@ type LessonStep = {
   content: React.ReactNode;
 };
 
+// Helper function to render formatted text with markdown
+const renderFormattedText = (text: string, theme: any) => {
+  const lines = text.split('\n').filter(line => line.trim());
+  
+  return (
+    <View>
+      {lines.map((line, lineIndex) => {
+        const trimmedLine = line.trim();
+        
+        // Skip empty lines
+        if (!trimmedLine) return null;
+        
+        // Check for numbered list (1., 2., etc.)
+        const numberedMatch = trimmedLine.match(/^(\d+)\.\s*(.+)/);
+        if (numberedMatch) {
+          const [, number, content] = numberedMatch;
+          return (
+            <View key={lineIndex} style={{ flexDirection: 'row', marginBottom: 12, alignItems: 'flex-start' }}>
+              <View style={{ 
+                width: 28, 
+                height: 28, 
+                borderRadius: 14, 
+                backgroundColor: theme.primary + '20',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 12
+              }}>
+                <Text style={{ fontSize: 14, fontWeight: '900', color: theme.primary }}>{number}</Text>
+              </View>
+              <Text style={{ flex: 1, fontSize: 16, lineHeight: 24, fontWeight: '500', color: theme.text }}>
+                {renderTextSegments(content, theme)}
+              </Text>
+            </View>
+          );
+        }
+        
+        // Check for bullet list (-, •, *)
+        const bulletMatch = trimmedLine.match(/^[-•*]\s*(.+)/);
+        if (bulletMatch) {
+          const content = bulletMatch[1];
+          return (
+            <View key={lineIndex} style={{ flexDirection: 'row', marginBottom: 10, alignItems: 'flex-start' }}>
+              <View style={{ 
+                width: 8, 
+                height: 8, 
+                borderRadius: 4, 
+                backgroundColor: theme.primary,
+                marginTop: 8,
+                marginRight: 12
+              }} />
+              <Text style={{ flex: 1, fontSize: 20, lineHeight: 24, fontWeight: '600', color: theme.text }}>
+                {renderTextSegments(content, theme)}
+              </Text>
+            </View>
+          );
+        }
+        
+        // Check for header (ends with :)
+        if (trimmedLine.endsWith(':')) {
+          return (
+            <Text key={lineIndex} style={{ 
+              fontSize: 18, 
+              fontWeight: '900', 
+              color: theme.primary,
+              marginTop: 16,
+              marginBottom: 12,
+              textAlign: 'center'
+            }}>
+              {trimmedLine}
+            </Text>
+          );
+        }
+        
+        // Regular paragraph
+        return (
+          <Text key={lineIndex} style={{ 
+            fontSize: 17, 
+            lineHeight: 28, 
+            fontWeight: '500', 
+            color: theme.text,
+            marginBottom: 12,
+            textAlign: 'center'
+          }}>
+            {renderTextSegments(trimmedLine, theme)}
+          </Text>
+        );
+      })}
+    </View>
+  );
+};
+
+// Helper to render bold text within a line
+const renderTextSegments = (text: string, theme: any) => {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const boldText = part.slice(2, -2);
+      return (
+        <Text key={index} style={{ fontWeight: '900', color: theme.text }}>
+          {boldText}
+        </Text>
+      );
+    }
+    return part;
+  });
+};
+
 export default function LessonScreen() {
   const { params } = useRoute<LessonRoute>();
   const navigation = useNavigation<LessonNavigationProp>();
@@ -62,40 +169,152 @@ export default function LessonScreen() {
   // Progress bar animation
   const progressWidth = useSharedValue(0);
   
-  // Split content into larger chunks for content cards
+  // Split content into bite-sized chunks that fit on screen WITHOUT scrolling
   const contentChunks = React.useMemo(() => {
     const fullContent = skill.content || skill.summary;
-    // Split by paragraphs
-    const paragraphs = fullContent.split(/\n\n+/).filter(chunk => chunk.trim());
     
-    // If we have multiple paragraphs, group them into 2 chunks max
-    if (paragraphs.length > 1) {
-      const midPoint = Math.ceil(paragraphs.length / 2);
-      return [
-        paragraphs.slice(0, midPoint).join('\n\n'),
-        paragraphs.slice(midPoint).join('\n\n')
-      ].filter(chunk => chunk.trim());
+    // Remove markdown and clean content first
+    const cleanContent = fullContent.replace(/\*\*/g, '');
+    
+    // Split by sentences
+    const sentences = cleanContent.match(/[^.!?]+[.!?]+/g) || [cleanContent];
+    
+    // Each chunk = ONLY 1 sentence (to ensure it fits without scrolling)
+    const chunks: string[] = sentences.map(s => s.trim()).filter(s => s.length > 0);
+    
+    // If content is very long, limit to max 8 cards
+    if (chunks.length > 8) {
+      // Group sentences to reduce card count
+      const grouped: string[] = [];
+      const groupSize = Math.ceil(chunks.length / 8);
+      for (let i = 0; i < chunks.length; i += groupSize) {
+        grouped.push(chunks.slice(i, i + groupSize).join(' '));
+      }
+      return grouped;
     }
     
-    // If no paragraphs, split by sentences into 2 larger groups
-    const sentences = fullContent.match(/[^.!?]+[.!?]+/g) || [fullContent];
-    if (sentences.length > 3) {
-      const midPoint = Math.ceil(sentences.length / 2);
-      return [
-        sentences.slice(0, midPoint).join(' ').trim(),
-        sentences.slice(midPoint).join(' ').trim()
-      ];
-    }
-    
-    // If very short content, keep as single chunk
-    return [fullContent];
+    return chunks;
   }, [skill.content, skill.summary]);
+
+
+  // Generate smart titles based on content chunks
+  const contentTitles = React.useMemo(() => {
+    const titles: string[] = [];
+    
+    contentChunks.forEach((chunk, index) => {
+      // Try to extract a topic from the first few words
+      const firstWords = chunk.split(' ').slice(0, 4).join(' ');
+      const cleanTitle = firstWords.replace(/[.!?]/g, '').trim();
+      
+      // If the title is too short or generic, use position-based titles
+      if (cleanTitle.length < 10) {
+        const positionTitles = [
+          'Temel Kavramlar',
+          'Detaylar',
+          'İleri Seviye',
+          'Uygulama',
+          'Derinlemesine İnceleme',
+          'Ek Bilgiler'
+        ];
+        titles.push(positionTitles[index % positionTitles.length]);
+      } else {
+        titles.push(cleanTitle.length > 35 ? cleanTitle.substring(0, 32) + '...' : cleanTitle);
+      }
+    });
+    
+    return titles;
+  }, [contentChunks]);
+
+  // Generate engaging learning outcomes (max 5-6)
+  const learningOutcomes = React.useMemo(() => {
+    // Skill-specific engaging outcomes
+    const categoryOutcomes: Record<string, string[]> = {
+      'Yapay Zeka': [
+        'Yapay zekanın temel prensiplerini anlayacaksın',
+        'Günlük hayatta AI kullanımını keşfedeceksin',
+        'Makine öğrenmesinin mantığını kavrayacaksın',
+        'AI araçlarını etkili kullanabileceksin',
+        'Yapay zeka trendlerini takip edebileceksin',
+      ],
+      'Startup': [
+        'Startup kurmanın ilk adımlarını öğreneceksin',
+        'İş modelini nasıl oluşturacağını bileceksin',
+        'Yatırımcılara sunum yapma becerisi kazanacaksın',
+        'Pazarlama stratejilerini öğreneceksin',
+        'Startup ekosistemini anlayacaksın',
+      ],
+      'Teknoloji': [
+        'En son teknoloji trendlerini keşfedeceksin',
+        'Teknik kavramları kolayca anlayacaksın',
+        'Pratik uygulamalar yapabileceksin',
+        'Günlük işlerinde teknoloji kullanacaksın',
+        'Dijital dünyada bir adım önde olacaksın',
+      ],
+      'İş & Kariyer': [
+        'Kariyerinde hızlı ilerleme yöntemlerini öğreneceksin',
+        'Etkili networking becerileri kazanacaksın',
+        'İş görüşmelerinde başarılı olacaksın',
+        'Profesyonel gelişim stratejileri edineceksin',
+        'Liderlik becerilerini geliştreceksin',
+      ],
+      'İletişim': [
+        'Etkili iletişim tekniklerini öğreneceksin',
+        'İkna kabiliyetini geliştireceksin',
+        'Dinleme becerilerini güçlendireceksin',
+        'Beden dili okumayı öğreneceksin',
+        'Empati kurma yeteneğin artacak',
+      ],
+      'Kişisel Gelişim': [
+        'Kendini daha iyi tanıyacaksın',
+        'Hedef belirleme stratejileri öğreneceksin',
+        'Motivasyonunu yüksek tutmayı öğreneceksin',
+        'Verimlilik alışkanlıkları kazanacaksın',
+        'Öz güvenini artıracaksın',
+      ],
+      'Yaratıcılık': [
+        'Yaratıcı düşünme tekniklerini öğreneceksin',
+        'Problem çözme becerin gelişecek',
+        'Yeni fikirler üretmeyi öğreneceksin',
+        'Hayal gücünü güçlendireceksin',
+        'İnovatif yaklaşımlar geliştireceksin',
+      ],
+      'Tarih & Kültür': [
+        'Tarihi olayların arkasındaki hikayeyi öğreneceksin',
+        'Kültürel zenginlikleri keşfedeceksin',
+        'Geçmişten günümüze bağlantılar kuracaksın',
+        'Farklı perspektifler kazanacaksın',
+        'Dünya görüşün genişleyecek',
+      ],
+    };
+    
+    // Get outcomes for this category, or use generic ones
+    const outcomes = categoryOutcomes[skill.category] || [
+      'Bu konuda uzmanlaşacaksın',
+      'Pratik bilgiler edineceksin',
+      'Günlük hayatta uygulayabileceksin',
+      'Yeni bir beceri kazanacaksın',
+      'Kendini geliştirmiş olacaksın',
+    ];
+    
+    // Return first 5 outcomes (consistent number)
+    return outcomes.slice(0, 5);
+  }, [skill.category]);
   
   // Create lesson steps - flatten all content cards into main steps
   const lessonSteps: LessonStep[] = React.useMemo(() => {
     const steps: LessonStep[] = [];
     
-    // Step 1: Introduction
+    // Examples for each content card
+    const examples = [
+      'Örnek: Günlük hayatta bu pratiği uygulayabilirsiniz',
+      'Uygulama: Bu bilgiyi hemen kullanmaya başlayın',
+      'İpucu: Bu tekniği sabah rutininize ekleyin',
+      'Pratik: Öğrendiklerinizi test edin',
+      'Deneme: Bu yöntemi bugün deneyin',
+      'Not: Bu bilgiyi unutmayın',
+    ];
+    
+    // Step 1: Introduction with learning outcomes
     steps.push({
       title: 'Giriş',
       icon: '👋',
@@ -105,7 +324,9 @@ export default function LessonScreen() {
             <Text style={styles.categoryEmoji}>{categoryEmoji}</Text>
             <Text style={[styles.categoryText, { color: theme.primary }]}>{skill.category}</Text>
           </View>
-          <Text style={[styles.stepTitle, { color: theme.text }]}>{skill.title}</Text>
+          
+          <Text style={[styles.introTitle, { color: theme.text }]}>{skill.title}</Text>
+          
           <View style={styles.metaRow}>
             <View style={[styles.metaItem, { backgroundColor: theme.backgroundDark }]}>
               <Text style={styles.metaIcon}>⏱</Text>
@@ -118,9 +339,23 @@ export default function LessonScreen() {
               </View>
             )}
           </View>
-          <View style={[styles.contentSection, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <Text style={[styles.sectionLabel, { color: theme.primary }]}>Ne Öğreneceksin?</Text>
-            <Text style={[styles.summary, { color: theme.text }]}>{skill.summary}</Text>
+
+          <View style={[styles.outcomesSection, { backgroundColor: theme.accent + '10', borderColor: theme.accent + '40' }]}>
+            <Text style={[styles.outcomesTitle, { color: theme.accent }]}>
+              🎓 Eğitim bitince bunları öğrenmiş olacaksın:
+            </Text>
+            {learningOutcomes.map((outcome, idx) => (
+              <View key={idx} style={styles.outcomeItem}>
+                <Text style={[styles.outcomeIcon, { color: theme.accent }]}>✓</Text>
+                <Text style={[styles.outcomeText, { color: theme.text }]}>{outcome}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={[styles.motivationBadge, { backgroundColor: theme.primary + '10' }]}>
+            <Text style={[styles.motivationText, { color: theme.primary }]}>
+              🚀 Hadi başlayalım!
+            </Text>
           </View>
         </View>
       )
@@ -128,27 +363,26 @@ export default function LessonScreen() {
 
     // Steps 2-N: Content cards (each chunk becomes a separate step)
     contentChunks.forEach((chunk, index) => {
+      const example = examples[index % examples.length];
+      const title = contentTitles[index];
       steps.push({
-        title: `Detaylı Bilgi ${index + 1}`,
+        title: title,
         icon: '📖',
         content: (
-          <View>
-            <View style={styles.contentStepHeader}>
-              <Text style={[styles.stepTitle, { color: theme.text }]}>Detaylı Bilgi</Text>
-              <Text style={[styles.cardCounter, { color: theme.textSecondary }]}>
-                Kart {index + 1} / {contentChunks.length}
-              </Text>
-            </View>
+          <View style={styles.contentContainer}>
+            <Text style={[styles.contentStepTitle, { color: theme.text }]}>{title}</Text>
+            <Text style={[styles.cardCounter, { color: theme.textSecondary }]}>
+              Kart {index + 1} / {contentChunks.length}
+            </Text>
             
-            <View style={[styles.contentSection, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              <View style={[styles.contentCardHeader, { backgroundColor: theme.primary + '10' }]}>
-                <Text style={[styles.contentCardNumber, { color: theme.primary }]}>
-                  {index + 1}
-                </Text>
-              </View>
-              <Text style={[styles.content, { color: theme.text }]}>
-                {chunk}
-              </Text>
+            <View style={styles.contentTextContainer}>
+              {renderFormattedText(chunk, theme)}
+            </View>
+
+            {/* Example Badge */}
+            <View style={[styles.exampleBadge, { backgroundColor: theme.accent + '15' }]}>
+              <Text style={[styles.exampleIcon, { color: theme.accent }]}>💡</Text>
+              <Text style={[styles.exampleText, { color: theme.text }]}>{example}</Text>
             </View>
           </View>
         )
@@ -209,7 +443,7 @@ export default function LessonScreen() {
     });
 
     return steps;
-  }, [skill, theme, categoryEmoji, contentChunks]);
+  }, [skill, theme, categoryEmoji, contentChunks, contentTitles, learningOutcomes]);
   
   const totalSteps = lessonSteps.length;
   
@@ -281,13 +515,13 @@ export default function LessonScreen() {
                   progressBarStyle
                 ]}
               />
-            </View>
+          </View>
             <Text style={[styles.progressText, { color: theme.textSecondary }]}>
               Adım {currentStep + 1} / {totalSteps} {lessonSteps[currentStep].icon}
             </Text>
-          </Animated.View>
+        </Animated.View>
 
-          {/* Step Content Card - Scrollable full height */}
+          {/* Step Content Card - NO SCROLL, content fits perfectly */}
           <Animated.View 
             key={currentStep}
             entering={FadeInRight.duration(400).springify()}
@@ -296,14 +530,10 @@ export default function LessonScreen() {
               borderColor: theme.border 
             }]}
           >
-            <ScrollView 
-              style={styles.cardScrollView}
-              contentContainerStyle={styles.cardScrollContent}
-              showsVerticalScrollIndicator={false}
-            >
+            <View style={styles.cardContent}>
               {lessonSteps[currentStep].content}
-            </ScrollView>
-          </Animated.View>
+          </View>
+        </Animated.View>
 
           {/* Navigation Buttons - Fixed at bottom */}
           <Animated.View entering={FadeInUp.delay(300)} style={styles.navigationContainer}>
@@ -329,7 +559,9 @@ export default function LessonScreen() {
                 onPress={handleNext}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.navButtonText, { color: theme.textInverted }]}>İleri →</Text>
+                <Text style={[styles.navButtonText, { color: theme.textInverted }]}>
+                  {currentStep === 0 ? '🎓 Öğrenmeye Başla' : 'İleri →'}
+                </Text>
               </TouchableOpacity>
             ) : (
           <TouchableOpacity
@@ -351,7 +583,7 @@ export default function LessonScreen() {
             </Text>
           </TouchableOpacity>
             )}
-          </Animated.View>
+        </Animated.View>
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -401,19 +633,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     overflow: 'hidden',
   },
-  cardScrollView: {
+  cardContent: {
     flex: 1,
-  },
-  cardScrollContent: {
     padding: spacing.xl,
-    flexGrow: 1,
     justifyContent: 'center',
   },
   stepTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '900',
-    marginBottom: spacing.xl,
-    lineHeight: 36,
+    marginBottom: spacing.md,
+    lineHeight: 28,
+    textAlign: 'center',
+  },
+  introTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: spacing.md,
+    lineHeight: 32,
     textAlign: 'center',
   },
   
@@ -459,107 +695,163 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Content Section
-  contentStepHeader: {
-    marginBottom: spacing.sm,
-    flexDirection: 'row',
+  // Content Section (new clean version)
+  contentContainer: {
+    flex: 1,
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+  },
+  contentStepTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: spacing.xs,
+    lineHeight: 32,
+    textAlign: 'center',
   },
   cardCounter: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: spacing.xl,
+    textAlign: 'center',
+  },
+  contentTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
   },
   contentSection: {
     borderRadius: radii.lg,
-    padding: spacing.xl,
-    marginTop: spacing.lg,
+    padding: spacing.lg,
+    marginTop: spacing.md,
     borderWidth: 0,
     position: 'relative',
   },
-  contentCardHeader: {
-    position: 'absolute',
-    top: spacing.lg,
-    right: spacing.lg,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contentCardNumber: {
-    fontSize: 16,
-    fontWeight: '900',
-  },
   sectionLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
     textAlign: 'center',
   },
   summary: {
-    fontSize: 18,
-    lineHeight: 28,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  content: {
-    fontSize: 20,
-    lineHeight: 32,
+    fontSize: 17,
+    lineHeight: 26,
     fontWeight: '500',
     textAlign: 'center',
   },
 
+  // Learning Outcomes Section
+  outcomesSection: {
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    borderWidth: 2,
+  },
+  outcomesTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  outcomeItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  outcomeIcon: {
+    fontSize: 14,
+    marginRight: spacing.xs,
+    marginTop: 1,
+  },
+  outcomeText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+
+  // Motivation Badge
+  motivationBadge: {
+    borderRadius: radii.md,
+    padding: spacing.sm,
+    marginTop: spacing.md,
+    alignItems: 'center',
+  },
+  motivationText: {
+    fontSize: 15,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+
+  // Example Badge (simpler, no card)
+  exampleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  exampleIcon: {
+    fontSize: 16,
+  },
+  exampleText: {
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '600',
+    fontStyle: 'italic',
+  },
+
   // Key Points
   keyPoints: {
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   keyPoint: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   bulletContainer: {
-    marginTop: 8,
+    marginTop: 6,
     marginRight: spacing.md,
   },
   bullet: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   keyPointText: {
     flex: 1,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
-    lineHeight: 26,
+    lineHeight: 24,
   },
 
   // Completion & Summary
   completionText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
-    lineHeight: 28,
+    lineHeight: 26,
     textAlign: 'center',
   },
   summaryBox: {
     borderRadius: radii.lg,
-    padding: spacing.xl,
-    marginTop: spacing.xl,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
     borderWidth: 1,
   },
   summaryLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
     textAlign: 'center',
   },
   summaryContent: {
-    fontSize: 17,
-    lineHeight: 26,
+    fontSize: 16,
+    lineHeight: 24,
     fontWeight: '500',
     textAlign: 'center',
   },
