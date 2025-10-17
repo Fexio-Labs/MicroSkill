@@ -1,7 +1,8 @@
 // Centralized theme constants: colors, spacing, radii, and typography
 // MicroSkill - Modern, energetic education-themed color palette
 
-export const colors = {
+// Dark Mode Colors
+export const darkColors = {
   // Primary - Deep Purple/Indigo (Learning & Professionalism)
   primary: '#6366F1',
   primaryLight: '#818CF8',
@@ -63,6 +64,73 @@ export const colors = {
   categoryCommunication: '#6366F1',
   categoryPersonalDev: '#F59E0B',
 };
+
+// Light Mode Colors
+export const lightColors = {
+  // Primary - Deep Purple/Indigo (Learning & Professionalism)
+  primary: '#6366F1',
+  primaryLight: '#818CF8',
+  primaryDark: '#4F46E5',
+  
+  // Secondary - Vibrant Orange (Energy & Motivation)
+  secondary: '#F59E0B',
+  secondaryLight: '#FBBF24',
+  secondaryDark: '#D97706',
+  
+  // Accent - Emerald Green (Success & Progress)
+  accent: '#10B981',
+  accentLight: '#34D399',
+  accentDark: '#059669',
+  
+  // Success - Emerald Green
+  success: '#10B981',
+  successLight: '#34D399',
+  successDark: '#059669',
+  
+  // Warning - Vibrant Orange
+  warning: '#F59E0B',
+  warningLight: '#FBBF24',
+  
+  // Danger - Vibrant Red
+  danger: '#EF4444',
+  dangerLight: '#F87171',
+  
+  // Backgrounds - Light mode with soft gradients
+  background: '#FFFFFF',
+  backgroundSecondary: '#F8FAFC',
+  backgroundTertiary: '#F1F5F9',
+  backgroundDark: '#E2E8F0',
+  surface: '#FFFFFF',
+  surfaceElevated: '#F8FAFC',
+  
+  // Text - Dark text for light mode
+  text: '#0F172A',
+  textSecondary: '#475569',
+  textTertiary: '#64748B',
+  textInverted: '#F8FAFC',
+  
+  // Borders
+  border: '#E2E8F0',
+  borderLight: '#CBD5E1',
+  
+  // Premium Gold
+  premium: '#F59E0B',
+  premiumLight: '#FEF3C7',
+  premiumBorder: '#F59E0B',
+  
+  // Category Colors - Same for both modes
+  categoryTech: '#6366F1',
+  categoryBusiness: '#10B981',
+  categoryHistory: '#EF4444',
+  categoryCreativity: '#EC4899',
+  categoryWellbeing: '#10B981',
+  categoryStartup: '#F59E0B',
+  categoryCommunication: '#6366F1',
+  categoryPersonalDev: '#F59E0B',
+};
+
+// Default export for backward compatibility
+export const colors = darkColors;
 
 export const spacing = {
   xs: 4,

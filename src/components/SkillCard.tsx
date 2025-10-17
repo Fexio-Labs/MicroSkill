@@ -3,7 +3,8 @@ import { StyleSheet, Text, TextStyle, TouchableOpacity, View, ViewStyle } from '
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import type { MicroSkill } from '../data/microSkills';
 import { useSkillContext } from '../hooks/useSkillContext';
-import { colors, radii, shadows, spacing } from '../styles/theme';
+import { useTheme } from '../hooks/useTheme';
+import { radii, shadows, spacing } from '../styles/theme';
 
 type SkillCardProps = {
   skill: MicroSkill;
@@ -15,6 +16,7 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function SkillCard({ skill, isPremium = false, onPress }: SkillCardProps) {
   const { canAccessPremium } = useSkillContext();
+  const { theme } = useTheme();
   const scale = useSharedValue(1);
   const hasAccess = canAccessPremium(skill.id);
 
@@ -34,9 +36,10 @@ export default function SkillCard({ skill, isPremium = false, onPress }: SkillCa
     <AnimatedTouchable 
       style={[
         styles.card, 
+        { backgroundColor: theme.surface, borderColor: theme.border },
         animatedStyle,
-        isPremium && styles.cardPremium,
-        !hasAccess && styles.cardLocked
+        isPremium && [styles.cardPremium, { borderColor: theme.premium }],
+        !hasAccess && [styles.cardLocked, { backgroundColor: theme.backgroundTertiary }]
       ]} 
       activeOpacity={hasAccess ? 1 : 0.6}
       onPress={hasAccess ? onPress : undefined}
@@ -45,46 +48,49 @@ export default function SkillCard({ skill, isPremium = false, onPress }: SkillCa
     >
       {/* Premium Badge Ribbon */}
       {isPremium && !hasAccess && (
-        <View style={styles.premiumRibbon}>
-          <Text style={styles.premiumRibbonText}>🔒 Premium</Text>
+        <View style={[styles.premiumRibbon, { backgroundColor: theme.premium }]}>
+          <Text style={[styles.premiumRibbonText, { color: theme.textInverted }]}>🔒 Premium</Text>
         </View>
       )}
       
       {isPremium && hasAccess && (
-        <View style={styles.premiumRibbonUnlocked}>
-          <Text style={styles.premiumRibbonTextUnlocked}>💎 Premium</Text>
+        <View style={[styles.premiumRibbonUnlocked, { backgroundColor: theme.primary }]}>
+          <Text style={[styles.premiumRibbonTextUnlocked, { color: theme.textInverted }]}>💎 Premium</Text>
         </View>
       )}
 
       <View style={styles.headerRow}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
           {skill.title}
         </Text>
         {!isPremium && (
-          <View style={styles.badgeFree}>
-            <Text style={styles.badgeTextFree}>✓ Ücretsiz</Text>
+          <View style={[styles.badgeFree, { 
+            backgroundColor: theme.successLight + '30',
+            borderColor: theme.success 
+          }]}>
+            <Text style={[styles.badgeTextFree, { color: theme.successDark }]}>✓ Ücretsiz</Text>
           </View>
         )}
       </View>
 
       <View style={styles.metaRow}>
-        <Text style={styles.meta}>
+        <Text style={[styles.meta, { color: theme.textSecondary }]}>
           {skill.category}
         </Text>
-        <Text style={styles.dot}>•</Text>
-        <Text style={styles.meta}>{skill.durationMinutes} dk</Text>
+        <Text style={[styles.dot, { color: theme.textTertiary }]}>•</Text>
+        <Text style={[styles.meta, { color: theme.textSecondary }]}>{skill.durationMinutes} dk</Text>
       </View>
 
-      <Text style={styles.summary} numberOfLines={3}>
+      <Text style={[styles.summary, { color: theme.textSecondary }]} numberOfLines={3}>
         {skill.summary}
       </Text>
 
       {/* Action Row */}
-      <View style={styles.actionRow}>
+      <View style={[styles.actionRow, { borderTopColor: theme.borderLight }]}>
         {hasAccess ? (
-          <Text style={styles.actionText}>Öğrenmeye Başla →</Text>
+          <Text style={[styles.actionText, { color: theme.primary }]}>Öğrenmeye Başla →</Text>
         ) : (
-          <Text style={styles.lockedText}>🔒 Premium Gerekli</Text>
+          <Text style={[styles.lockedText, { color: theme.textTertiary }]}>🔒 Premium Gerekli</Text>
         )}
       </View>
     </AnimatedTouchable>
@@ -114,42 +120,34 @@ type Styles = {
 
 const styles = StyleSheet.create<Styles>({
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.lg,
     marginVertical: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
     overflow: 'hidden',
     position: 'relative',
     ...shadows.md,
   },
   cardPremium: {
-    borderColor: colors.premium,
     borderWidth: 2,
-    backgroundColor: colors.surface,
   },
   cardLocked: {
     opacity: 0.85,
-    backgroundColor: colors.backgroundTertiary,
   },
   premiumRibbon: {
     position: 'absolute',
     top: 12,
     right: -32,
-    backgroundColor: colors.premium,
     paddingVertical: 6,
     paddingHorizontal: 40,
     transform: [{ rotate: '45deg' }],
     zIndex: 10,
-    shadowColor: colors.premium,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
     elevation: 5,
   },
   premiumRibbonText: {
-    color: colors.textInverted,
     fontSize: 11,
     fontWeight: '900',
     textAlign: 'center',
@@ -159,19 +157,16 @@ const styles = StyleSheet.create<Styles>({
     position: 'absolute',
     top: 12,
     right: -32,
-    backgroundColor: colors.primary,
     paddingVertical: 6,
     paddingHorizontal: 40,
     transform: [{ rotate: '45deg' }],
     zIndex: 10,
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 4,
     elevation: 5,
   },
   premiumRibbonTextUnlocked: {
-    color: colors.textInverted,
     fontSize: 11,
     fontWeight: '900',
     textAlign: 'center',
@@ -186,7 +181,6 @@ const styles = StyleSheet.create<Styles>({
     flex: 1,
     fontSize: 18,
     fontWeight: '800',
-    color: colors.text,
     lineHeight: 24,
   },
   badgeFree: {
@@ -194,15 +188,12 @@ const styles = StyleSheet.create<Styles>({
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: 12,
-    backgroundColor: colors.successLight + '30',
     borderWidth: 1.5,
-    borderColor: colors.success,
   },
   badgeTextFree: {
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.3,
-    color: colors.successDark,
   },
   metaRow: {
     marginTop: spacing.xs,
@@ -212,17 +203,14 @@ const styles = StyleSheet.create<Styles>({
   },
   meta: {
     fontSize: 13,
-    color: colors.textSecondary,
     fontWeight: '600',
   },
   dot: {
     marginHorizontal: spacing.sm,
-    color: colors.textTertiary,
     fontWeight: '700',
   },
   summary: {
     fontSize: 14,
-    color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: spacing.md,
   },
@@ -231,17 +219,14 @@ const styles = StyleSheet.create<Styles>({
     justifyContent: 'flex-end',
     paddingTop: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
   },
   actionText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.primary,
   },
   lockedText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textTertiary,
   },
 });
 

@@ -2,6 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import AnimatedTabBar from '../components/AnimatedTabBar';
+import { useTheme } from '../hooks/useTheme';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LanguageSettingsScreen from '../screens/LanguageSettingsScreen';
@@ -13,7 +14,6 @@ import ProfileScreen from '../screens/ProfileScreen';
 import QuizResultScreen from '../screens/QuizResultScreen';
 import QuizScreen from '../screens/QuizScreen';
 import SkillsScreen from '../screens/SkillsScreen';
-import { colors } from '../styles/theme';
 
 // Root stack route params
 export type RootStackParamList = {
@@ -46,29 +46,29 @@ export type TabParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-// Common Stack Screen Options with Animations
-const stackScreenOptions = {
-  headerStyle: {
-    backgroundColor: colors.surface,
-  },
-  headerTintColor: colors.primary,
-  headerTitleStyle: {
-    fontWeight: '800',
-    fontSize: 18,
-  },
-  headerShadowVisible: false,
-  headerBackTitleVisible: false,
-  // Modern slide animations
-  animation: 'slide_from_right' as const,
-  animationDuration: 300,
-  // Gesture configuration
-  gestureEnabled: true,
-  gestureDirection: 'horizontal' as const,
-  fullScreenGestureEnabled: true,
-};
-
 // Home Stack
 function HomeStack() {
+  const { theme } = useTheme();
+  
+  const stackScreenOptions = {
+    headerStyle: {
+      backgroundColor: theme.surface,
+    },
+    headerTintColor: theme.primary,
+    headerTitleStyle: {
+      fontWeight: '800',
+      fontSize: 18,
+      color: theme.text,
+    },
+    headerShadowVisible: false,
+    headerBackTitleVisible: false,
+    animation: 'slide_from_right' as const,
+    animationDuration: 300,
+    gestureEnabled: true,
+    gestureDirection: 'horizontal' as const,
+    fullScreenGestureEnabled: true,
+  };
+  
   return (
     <Stack.Navigator
       screenOptions={stackScreenOptions}
@@ -130,6 +130,27 @@ function HomeStack() {
 
 // Skills Stack
 function SkillsStack() {
+  const { theme } = useTheme();
+  
+  const stackScreenOptions = {
+    headerStyle: {
+      backgroundColor: theme.surface,
+    },
+    headerTintColor: theme.primary,
+    headerTitleStyle: {
+      fontWeight: '800',
+      fontSize: 18,
+      color: theme.text,
+    },
+    headerShadowVisible: false,
+    headerBackTitleVisible: false,
+    animation: 'slide_from_right' as const,
+    animationDuration: 300,
+    gestureEnabled: true,
+    gestureDirection: 'horizontal' as const,
+    fullScreenGestureEnabled: true,
+  };
+  
   return (
     <Stack.Navigator
       screenOptions={stackScreenOptions}
@@ -186,6 +207,27 @@ function SkillsStack() {
 
 // Premium Stack
 function PremiumStack() {
+  const { theme } = useTheme();
+  
+  const stackScreenOptions = {
+    headerStyle: {
+      backgroundColor: theme.surface,
+    },
+    headerTintColor: theme.primary,
+    headerTitleStyle: {
+      fontWeight: '800',
+      fontSize: 18,
+      color: theme.text,
+    },
+    headerShadowVisible: false,
+    headerBackTitleVisible: false,
+    animation: 'slide_from_right' as const,
+    animationDuration: 300,
+    gestureEnabled: true,
+    gestureDirection: 'horizontal' as const,
+    fullScreenGestureEnabled: true,
+  };
+  
   return (
     <Stack.Navigator
       screenOptions={stackScreenOptions}
@@ -243,6 +285,27 @@ function PremiumStack() {
 
 // Profile Stack
 function ProfileStack() {
+  const { theme } = useTheme();
+  
+  const stackScreenOptions = {
+    headerStyle: {
+      backgroundColor: theme.surface,
+    },
+    headerTintColor: theme.primary,
+    headerTitleStyle: {
+      fontWeight: '800',
+      fontSize: 18,
+      color: theme.text,
+    },
+    headerShadowVisible: false,
+    headerBackTitleVisible: false,
+    animation: 'slide_from_right' as const,
+    animationDuration: 300,
+    gestureEnabled: true,
+    gestureDirection: 'horizontal' as const,
+    fullScreenGestureEnabled: true,
+  };
+  
   return (
     <Stack.Navigator
       screenOptions={stackScreenOptions}
@@ -278,13 +341,15 @@ function ProfileStack() {
 
 // Main Tab Navigator
 export default function AppNavigator() {
+  const { theme } = useTheme();
+  
   return (
     <Tab.Navigator
       tabBar={(props) => <AnimatedTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textTertiary,
       }}
     >
       <Tab.Screen 

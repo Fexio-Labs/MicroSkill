@@ -9,7 +9,8 @@ import Animated, {
     withSpring,
     withTiming,
 } from 'react-native-reanimated';
-import { colors, spacing } from '../styles/theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing } from '../styles/theme';
 
 type IconName = 'home' | 'book' | 'diamond' | 'person';
 
@@ -21,8 +22,13 @@ const TAB_ICONS: Record<string, IconName> = {
 };
 
 export default function AnimatedTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { theme } = useTheme();
+  
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, { 
+      backgroundColor: theme.surface,
+      borderTopColor: theme.border 
+    }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label = options.tabBarLabel ?? options.title ?? route.name;
@@ -77,6 +83,7 @@ type AnimatedTabProps = {
 };
 
 function AnimatedTab({ label, iconName, isFocused, onPress, onLongPress }: AnimatedTabProps) {
+  const { theme } = useTheme();
   const scale = useSharedValue(1);
   const translateY = useSharedValue(0);
 
@@ -111,14 +118,14 @@ function AnimatedTab({ label, iconName, isFocused, onPress, onLongPress }: Anima
         <Ionicons
           name={iconName}
           size={24}
-          color={isFocused ? colors.primary : colors.textTertiary}
+          color={isFocused ? theme.primary : theme.textTertiary}
         />
-        {isFocused && <View style={styles.activeIndicator} />}
+        {isFocused && <View style={[styles.activeIndicator, { backgroundColor: theme.primary }]} />}
       </Animated.View>
       <Animated.Text
         style={[
           styles.label,
-          { color: isFocused ? colors.primary : colors.textTertiary },
+          { color: isFocused ? theme.primary : theme.textTertiary },
           animatedLabelStyle,
         ]}
       >
@@ -131,9 +138,7 @@ function AnimatedTab({ label, iconName, isFocused, onPress, onLongPress }: Anima
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
     height: 60,
     paddingBottom: Platform.OS === 'ios' ? 0 : 8,
     paddingTop: 8,
@@ -162,7 +167,6 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.primary,
   },
   label: {
     fontSize: 12,

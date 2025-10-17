@@ -6,15 +6,16 @@ import 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableScreens } from 'react-native-screens';
 import { SkillProvider, useSkillContext } from './src/hooks/useSkillContext';
+import { ThemeProvider, useTheme } from './src/hooks/useTheme';
 import { UserProfileProvider } from './src/hooks/useUserProfile';
 import AppNavigator from './src/navigation/AppNavigator';
 import OnboardingScreen, { ONBOARDING_STORAGE_KEY } from './src/screens/OnboardingScreen';
-import { colors } from './src/styles/theme';
 
 enableScreens(true);
 
 function AppContent() {
   const { isLoading } = useSkillContext();
+  const { theme, isDark } = useTheme();
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -38,11 +39,11 @@ function AppContent() {
   // Loading state
   if (isLoading || showOnboarding === null) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <Text style={styles.logo}>🎓</Text>
-        <Text style={styles.appName}>MicroSkill</Text>
-        <Text style={styles.tagline}>5 Dakikada Bir Şey Öğren</Text>
-        <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+        <Text style={[styles.appName, { color: theme.text }]}>MicroSkill</Text>
+        <Text style={[styles.tagline, { color: theme.textSecondary }]}>5 Dakikada Bir Şey Öğren</Text>
+        <ActivityIndicator size="large" color={theme.primary} style={styles.loader} />
       </View>
     );
   }
@@ -55,14 +56,14 @@ function AppContent() {
   return (
     <NavigationContainer
       theme={{
-        dark: true,
+        dark: isDark,
         colors: {
-          primary: colors.primary,
-          background: colors.background,
-          card: colors.surface,
-          text: colors.text,
-          border: colors.border,
-          notification: colors.accent,
+          primary: theme.primary,
+          background: theme.background,
+          card: theme.surface,
+          text: theme.text,
+          border: theme.border,
+          notification: theme.accent,
         },
         fonts: {
           regular: {
@@ -92,11 +93,13 @@ function AppContent() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <UserProfileProvider>
-        <SkillProvider>
-          <AppContent />
-        </SkillProvider>
-      </UserProfileProvider>
+      <ThemeProvider>
+        <UserProfileProvider>
+          <SkillProvider>
+            <AppContent />
+          </SkillProvider>
+        </UserProfileProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
@@ -106,7 +109,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
   },
   logo: {
     fontSize: 80,
@@ -115,13 +117,11 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 32,
     fontWeight: '900',
-    color: colors.text,
     marginBottom: 8,
   },
   tagline: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.textSecondary,
     marginBottom: 32,
   },
   loader: {
