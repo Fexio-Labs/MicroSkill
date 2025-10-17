@@ -8,8 +8,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SkillCard from '../components/SkillCard';
 import { MOCK_MICRO_SKILLS } from '../data/microSkills';
 import { useSkillContext } from '../hooks/useSkillContext';
+import { useTheme } from '../hooks/useTheme';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, radii, spacing } from '../styles/theme';
+import { radii, spacing } from '../styles/theme';
 
 type Category = 'all' | 'free' | 'premium' | 'completed';
 type SkillsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Skills'>;
@@ -17,6 +18,7 @@ type SkillsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Skill
 export default function SkillsScreen() {
   const navigation = useNavigation<SkillsNavigationProp>();
   const { completedSkills } = useSkillContext();
+  const { theme } = useTheme();
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
 
   const filteredSkills = React.useMemo(() => {
@@ -41,14 +43,14 @@ export default function SkillsScreen() {
 
   return (
     <LinearGradient
-      colors={[colors.background, colors.backgroundSecondary]}
+      colors={[theme.background, theme.backgroundSecondary]}
       style={styles.gradientContainer}
     >
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>🎯 Tüm Beceriler</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>🎯 Tüm Beceriler</Text>
+          <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
             {filteredSkills.length} beceri mevcut
           </Text>
         </View>
@@ -68,14 +70,19 @@ export default function SkillsScreen() {
               <TouchableOpacity
                 style={[
                   styles.categoryButton,
-                  selectedCategory === category.id && styles.categoryButtonActive
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                  selectedCategory === category.id && [styles.categoryButtonActive, { 
+                    backgroundColor: theme.primary, 
+                    borderColor: theme.primary 
+                  }]
                 ]}
                 onPress={() => setSelectedCategory(category.id)}
               >
                 <Text style={styles.categoryIcon}>{category.icon}</Text>
                 <Text style={[
                   styles.categoryLabel,
-                  selectedCategory === category.id && styles.categoryLabelActive
+                  { color: theme.text },
+                  selectedCategory === category.id && [styles.categoryLabelActive, { color: theme.background }]
                 ]}>
                   {category.label}
                 </Text>
@@ -106,7 +113,7 @@ export default function SkillsScreen() {
           {filteredSkills.length === 0 && (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📭</Text>
-              <Text style={styles.emptyText}>Bu kategoride beceri bulunamadı</Text>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Bu kategoride beceri bulunamadı</Text>
             </View>
           )}
         </ScrollView>
@@ -132,12 +139,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: '900',
-    color: colors.text,
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: colors.textSecondary,
     fontWeight: '600',
   },
 
@@ -153,17 +158,13 @@ const styles = StyleSheet.create({
   categoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
     gap: spacing.xs,
   },
   categoryButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
   categoryIcon: {
     fontSize: 16,
@@ -171,10 +172,8 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
   },
   categoryLabelActive: {
-    color: colors.background,
   },
 
   // Skills List
@@ -198,7 +197,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: colors.textSecondary,
     fontWeight: '600',
   },
 });

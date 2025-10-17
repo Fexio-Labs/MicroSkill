@@ -7,8 +7,9 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MOCK_MICRO_SKILLS } from '../data/microSkills';
 import { useSkillContext } from '../hooks/useSkillContext';
+import { useTheme } from '../hooks/useTheme';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, radii, shadows, spacing } from '../styles/theme';
+import { radii, shadows, spacing } from '../styles/theme';
 
 type LessonRoute = RouteProp<RootStackParamList, 'Lesson'>;
 type LessonNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Lesson'>;
@@ -28,6 +29,7 @@ export default function LessonScreen() {
   const { params } = useRoute<LessonRoute>();
   const navigation = useNavigation<LessonNavigationProp>();
   const { canAccessPremium } = useSkillContext();
+  const { theme } = useTheme();
   
   const skill = React.useMemo(
     () => MOCK_MICRO_SKILLS.find((s) => s.id === (params?.skillId ?? '')) ?? MOCK_MICRO_SKILLS[0],
@@ -61,7 +63,7 @@ export default function LessonScreen() {
 
   return (
     <LinearGradient
-      colors={[colors.background, colors.backgroundSecondary]}
+      colors={[theme.background, theme.backgroundSecondary]}
       style={styles.gradientContainer}
     >
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -71,70 +73,82 @@ export default function LessonScreen() {
           showsVerticalScrollIndicator={false}
         >
         {/* Header Card */}
-        <Animated.View entering={FadeInDown.delay(100)} style={styles.headerCard}>
-          <View style={styles.categoryBadge}>
+        <Animated.View entering={FadeInDown.delay(100)} style={[styles.headerCard, { 
+          backgroundColor: theme.surface,
+          borderColor: theme.border 
+        }]}>
+          <View style={[styles.categoryBadge, { backgroundColor: theme.primaryLight + '30' }]}>
             <Text style={styles.categoryEmoji}>{categoryEmoji}</Text>
-            <Text style={styles.categoryText}>{skill.category}</Text>
+            <Text style={[styles.categoryText, { color: theme.primary }]}>{skill.category}</Text>
           </View>
-          <Text style={styles.title}>{skill.title}</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{skill.title}</Text>
           <View style={styles.metaRow}>
-            <View style={styles.metaItem}>
+            <View style={[styles.metaItem, { backgroundColor: theme.backgroundDark }]}>
               <Text style={styles.metaIcon}>⏱</Text>
-              <Text style={styles.metaText}>{skill.durationMinutes} dakika</Text>
+              <Text style={[styles.metaText, { color: theme.textSecondary }]}>{skill.durationMinutes} dakika</Text>
             </View>
             {skill.isPremium && (
-              <View style={[styles.metaItem, styles.premiumTag]}>
+              <View style={[styles.metaItem, styles.premiumTag, { backgroundColor: theme.premiumLight }]}>
                 <Text style={styles.metaIcon}>💎</Text>
-                <Text style={[styles.metaText, styles.premiumText]}>Premium</Text>
+                <Text style={[styles.metaText, styles.premiumText, { color: theme.premium }]}>Premium</Text>
               </View>
             )}
           </View>
         </Animated.View>
 
         {/* Summary Card */}
-        <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
+        <Animated.View entering={FadeInDown.delay(200)} style={[styles.section, { 
+          backgroundColor: theme.surface,
+          borderColor: theme.border 
+        }]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionIcon}>📝</Text>
-            <Text style={styles.sectionTitle}>Ne Öğreneceksin?</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Ne Öğreneceksin?</Text>
           </View>
-          <Text style={styles.summary}>{skill.summary}</Text>
+          <Text style={[styles.summary, { color: theme.text }]}>{skill.summary}</Text>
         </Animated.View>
 
         {/* Detailed Content */}
         {skill.content && (
-          <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>
+          <Animated.View entering={FadeInDown.delay(300)} style={[styles.section, { 
+            backgroundColor: theme.surface,
+            borderColor: theme.border 
+          }]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionIcon}>📖</Text>
-              <Text style={styles.sectionTitle}>Detaylı İçerik</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Detaylı İçerik</Text>
             </View>
-            <Text style={styles.content}>{skill.content}</Text>
+            <Text style={[styles.content, { color: theme.textSecondary }]}>{skill.content}</Text>
           </Animated.View>
         )}
 
         {/* Key Points */}
-        <Animated.View entering={FadeInDown.delay(400)} style={styles.section}>
+        <Animated.View entering={FadeInDown.delay(400)} style={[styles.section, { 
+          backgroundColor: theme.surface,
+          borderColor: theme.border 
+        }]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionIcon}>✨</Text>
-            <Text style={styles.sectionTitle}>Önemli Noktalar</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Önemli Noktalar</Text>
           </View>
           <View style={styles.keyPoints}>
             <View style={styles.keyPoint}>
               <View style={styles.bulletContainer}>
-                <View style={styles.bullet} />
+                <View style={[styles.bullet, { backgroundColor: theme.primary }]} />
               </View>
-              <Text style={styles.keyPointText}>5 dakikada hızlı öğrenme</Text>
+              <Text style={[styles.keyPointText, { color: theme.text }]}>5 dakikada hızlı öğrenme</Text>
             </View>
             <View style={styles.keyPoint}>
               <View style={styles.bulletContainer}>
-                <View style={styles.bullet} />
+                <View style={[styles.bullet, { backgroundColor: theme.primary }]} />
               </View>
-              <Text style={styles.keyPointText}>Pratik uygulanabilir bilgiler</Text>
+              <Text style={[styles.keyPointText, { color: theme.text }]}>Pratik uygulanabilir bilgiler</Text>
             </View>
             <View style={styles.keyPoint}>
               <View style={styles.bulletContainer}>
-                <View style={styles.bullet} />
+                <View style={[styles.bullet, { backgroundColor: theme.primary }]} />
               </View>
-              <Text style={styles.keyPointText}>Quiz ile pekiştirme</Text>
+              <Text style={[styles.keyPointText, { color: theme.text }]}>Quiz ile pekiştirme</Text>
             </View>
           </View>
         </Animated.View>
@@ -144,15 +158,19 @@ export default function LessonScreen() {
           <TouchableOpacity
             style={[
               styles.ctaButton,
-              !hasAccess && styles.ctaButtonLocked
+              { backgroundColor: theme.primary },
+              !hasAccess && [styles.ctaButtonLocked, { 
+                backgroundColor: theme.backgroundTertiary,
+                borderColor: theme.premium 
+              }]
             ]}
             onPress={handleQuizPress}
             activeOpacity={0.9}
           >
-            <Text style={styles.ctaButtonText}>
+            <Text style={[styles.ctaButtonText, { color: theme.textInverted }]}>
               {hasAccess ? '🎯 Quiz\'e Başla' : '🔒 Premium İçerik'}
             </Text>
-            <Text style={styles.ctaButtonSubtext}>
+            <Text style={[styles.ctaButtonSubtext, { color: theme.textInverted + 'CC' }]}>
               {hasAccess ? 'Bilgini test et!' : 'Premium\'a geç ve eriş'}
             </Text>
           </TouchableOpacity>
@@ -181,19 +199,16 @@ const styles = StyleSheet.create({
 
   // Header Card
   headerCard: {
-    backgroundColor: colors.surface,
     borderRadius: radii.xxl,
     padding: spacing.xl,
     marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.border,
     ...shadows.lg,
   },
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: colors.primaryLight + '30',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: 12,
@@ -206,12 +221,10 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.primary,
   },
   title: {
     fontSize: 26,
     fontWeight: '800',
-    color: colors.text,
     marginBottom: spacing.md,
     lineHeight: 32,
   },
@@ -222,13 +235,11 @@ const styles = StyleSheet.create({
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.backgroundDark,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: 10,
   },
   premiumTag: {
-    backgroundColor: colors.premiumLight,
   },
   metaIcon: {
     fontSize: 14,
@@ -237,20 +248,16 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   premiumText: {
-    color: colors.premium,
   },
 
   // Sections
   section: {
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.border,
     ...shadows.sm,
   },
   sectionHeader: {
@@ -265,17 +272,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.text,
   },
   summary: {
     fontSize: 15,
-    color: colors.text,
     lineHeight: 24,
     fontWeight: '500',
   },
   content: {
     fontSize: 15,
-    color: colors.textSecondary,
     lineHeight: 24,
   },
 
@@ -295,12 +299,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.primary,
   },
   keyPointText: {
     flex: 1,
     fontSize: 15,
-    color: colors.text,
     fontWeight: '500',
     lineHeight: 22,
   },
@@ -310,31 +312,25 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   ctaButton: {
-    backgroundColor: colors.primary,
     borderRadius: radii.xl,
     padding: spacing.xl,
     alignItems: 'center',
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
   ctaButtonLocked: {
-    backgroundColor: colors.backgroundTertiary,
     borderWidth: 2,
-    borderColor: colors.premium,
   },
   ctaButtonText: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.textInverted,
     marginBottom: 4,
   },
   ctaButtonSubtext: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textInverted + 'CC',
   },
 });
 
