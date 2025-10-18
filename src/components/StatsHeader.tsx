@@ -24,8 +24,8 @@ export default function StatsHeader({ score, level, streak }: StatsHeaderProps) 
       </View>
       
       <View style={[styles.statCard, styles.statCardHighlight, { 
-        backgroundColor: theme.primary + '15', 
-        borderColor: theme.primary 
+        backgroundColor: theme.primary + '20', 
+        borderColor: 'transparent'
       }]}>
         <Text style={[styles.statValue, styles.statValueHighlight, { color: theme.primary }]}>{level}</Text>
         <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Seviye</Text>

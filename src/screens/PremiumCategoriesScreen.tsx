@@ -8,7 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SkillCard from '../components/SkillCard';
 import { type CategoryType, MOCK_MICRO_SKILLS } from '../data/microSkills';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, radii, shadows, spacing } from '../styles/theme';
+import { radii, shadows, spacing } from '../styles/theme';
+import { useTheme } from '../hooks/useTheme';
 
 type PremiumNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Premium'>;
 
@@ -23,20 +24,22 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   'Tarih & Kültür': '📚',
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  'Yapay Zeka': colors.categoryTech,
-  'Startup': colors.categoryStartup,
-  'Teknoloji': colors.categoryTech,
-  'İş & Kariyer': colors.categoryBusiness,
-  'İletişim': colors.categoryCreativity,
-  'Kişisel Gelişim': colors.categoryWellbeing,
-  'Yaratıcılık': colors.categoryCreativity,
-  'Tarih & Kültür': colors.categoryHistory,
-};
+const getCategoryColors = (theme: any): Record<string, string> => ({
+  'Yapay Zeka': theme.categoryTech,
+  'Startup': theme.categoryStartup,
+  'Teknoloji': theme.categoryTech,
+  'İş & Kariyer': theme.categoryBusiness,
+  'İletişim': theme.categoryCreativity,
+  'Kişisel Gelişim': theme.categoryWellbeing,
+  'Yaratıcılık': theme.categoryCreativity,
+  'Tarih & Kültür': theme.categoryHistory,
+});
 
 export default function PremiumCategoriesScreen() {
   const navigation = useNavigation<PremiumNavigationProp>();
+  const { theme } = useTheme();
   const [selectedCategory, setSelectedCategory] = React.useState<CategoryType | 'Tümü'>('Tümü');
+  const categoryColors = getCategoryColors(theme);
 
   // Kategorilere göre grupla
   const categorizedSkills = React.useMemo(() => {
@@ -59,7 +62,7 @@ export default function PremiumCategoriesScreen() {
 
   return (
     <LinearGradient
-      colors={[colors.background, colors.backgroundSecondary]}
+      colors={[theme.background, theme.backgroundSecondary]}
       style={styles.gradientContainer}
     >
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -120,7 +123,7 @@ export default function PremiumCategoriesScreen() {
             {categories.map((category, index) => {
               const isSelected = selectedCategory === category;
               const emoji = CATEGORY_EMOJIS[category] || '📌';
-              const color = CATEGORY_COLORS[category] || colors.primary;
+              const color = categoryColors[category] || theme.primary;
               
               return (
                 <TouchableOpacity
@@ -191,24 +194,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: colors.text,
     marginBottom: spacing.xs,
   },
   headerSubtitle: {
     fontSize: 15,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
 
   // Premium Info Card
   premiumInfoCard: {
-    backgroundColor: colors.premium + '10',
     borderRadius: radii.xl,
     padding: spacing.xl,
     marginBottom: spacing.xl,
     borderWidth: 2,
-    borderColor: colors.premium + '40',
-    ...shadows.md,
   },
   premiumInfoHeader: {
     flexDirection: 'row',
@@ -222,7 +220,6 @@ const styles = StyleSheet.create({
   premiumInfoTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: colors.text,
   },
   premiumFeatures: {
     marginBottom: spacing.lg,
@@ -234,30 +231,21 @@ const styles = StyleSheet.create({
   },
   featureBullet: {
     fontSize: 16,
-    color: colors.success,
     fontWeight: '700',
     marginRight: spacing.sm,
   },
   featureText: {
     fontSize: 14,
-    color: colors.text,
     fontWeight: '500',
   },
   premiumButton: {
-    backgroundColor: colors.premium,
     paddingVertical: spacing.lg,
     borderRadius: radii.lg,
     alignItems: 'center',
-    shadowColor: colors.premium,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
   premiumButtonText: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.textInverted,
   },
 
   // Category Filter
@@ -267,7 +255,6 @@ const styles = StyleSheet.create({
   categorySectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.text,
     marginBottom: spacing.md,
   },
   categoryScroll: {
@@ -280,9 +267,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radii.xl,
-    backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: colors.border,
     gap: spacing.xs,
   },
   categoryEmoji: {
@@ -291,10 +276,8 @@ const styles = StyleSheet.create({
   categoryChipText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.text,
   },
   categoryChipTextSelected: {
-    color: colors.textInverted,
   },
 
   // Skills Section
@@ -304,7 +287,6 @@ const styles = StyleSheet.create({
   skillsSectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.textSecondary,
     marginBottom: spacing.md,
   },
 });

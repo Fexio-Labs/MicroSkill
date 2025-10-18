@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import Animated, {
   Easing,
   FadeInDown,
@@ -34,6 +34,20 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   'Tarih & Kültür': '📚',
 };
 
+// Helper function to get card configuration
+const getCardConfig = (type: string, theme: any) => {
+  const configs = {
+    concept: { icon: '🧠', color: theme.primary },
+    example: { icon: '💡', color: theme.warning },
+    tip: { icon: '✨', color: theme.accent },
+    definition: { icon: '📖', color: theme.secondary },
+    practice: { icon: '🏋️', color: theme.danger },
+    summary: { icon: '📋', color: theme.success },
+    code: { icon: '💻', color: theme.primaryDark },
+  };
+  return configs[type as keyof typeof configs] || configs.concept;
+};
+
 // Lesson steps structure
 type LessonStep = {
   title: string;
@@ -41,8 +55,8 @@ type LessonStep = {
   content: React.ReactNode;
 };
 
-// Helper function to render formatted text with markdown
-const renderFormattedText = (text: string, theme: any) => {
+// Helper function to render formatted text with markdown and code blocks
+const renderFormattedText = (text: string, theme: any, codeBlocks?: Array<{ language: string; code: string }>) => {
   const lines = text.split('\n').filter(line => line.trim());
   
   return (
@@ -128,6 +142,37 @@ const renderFormattedText = (text: string, theme: any) => {
           </Text>
         );
       })}
+      
+      {/* Render code blocks if available */}
+      {codeBlocks && codeBlocks.map((codeBlock, index) => (
+        <View key={`code-${index}`} style={{
+          backgroundColor: theme.backgroundTertiary,
+          borderRadius: 8,
+          padding: 12,
+          marginTop: 12,
+          borderLeftWidth: 4,
+          borderLeftColor: theme.primary,
+        }}>
+          <Text style={{
+            fontSize: 12,
+            fontWeight: '700',
+            color: theme.primary,
+            marginBottom: 8,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}>
+            {codeBlock.language.toUpperCase()}
+          </Text>
+          <Text style={{
+            fontSize: 14,
+            fontFamily: 'monospace',
+            color: theme.text,
+            lineHeight: 20,
+          }}>
+            {codeBlock.code}
+          </Text>
+        </View>
+      ))}
     </View>
   );
 };
@@ -165,65 +210,204 @@ export default function LessonScreen() {
 
   // Step management
   const [currentStep, setCurrentStep] = React.useState(0);
+  const [selectedCardType, setSelectedCardType] = React.useState<string>('all');
   
   // Progress bar animation
   const progressWidth = useSharedValue(0);
   
-  // Split content into bite-sized chunks that fit on screen WITHOUT scrolling
-  const contentChunks = React.useMemo(() => {
+  // Enhanced content parsing and categorization
+  const contentCards = React.useMemo(() => {
     const fullContent = skill.content || skill.summary;
     
-    // Remove markdown and clean content first
-    const cleanContent = fullContent.replace(/\*\*/g, '');
-    
-    // Split by sentences
-    const sentences = cleanContent.match(/[^.!?]+[.!?]+/g) || [cleanContent];
-    
-    // Each chunk = ONLY 1 sentence (to ensure it fits without scrolling)
-    const chunks: string[] = sentences.map(s => s.trim()).filter(s => s.length > 0);
-    
-    // If content is very long, limit to max 8 cards
-    if (chunks.length > 8) {
-      // Group sentences to reduce card count
-      const grouped: string[] = [];
-      const groupSize = Math.ceil(chunks.length / 8);
-      for (let i = 0; i < chunks.length; i += groupSize) {
-        grouped.push(chunks.slice(i, i + groupSize).join(' '));
-      }
-      return grouped;
-    }
-    
-    return chunks;
-  }, [skill.content, skill.summary]);
+    // Parse content into structured cards
+    const cards: Array<{
+      type: 'concept' | 'example' | 'tip' | 'definition' | 'practice' | 'summary' | 'code';
+      title: string;
+      content: string;
+      icon: string;
+      color: string;
+      codeBlocks?: Array<{ language: string; code: string }>;
+    }> = [];
 
-
-  // Generate smart titles based on content chunks
-  const contentTitles = React.useMemo(() => {
-    const titles: string[] = [];
+    // Split by major sections (headers ending with :)
+    const sections = fullContent.split(/\n\s*\n/).filter(section => section.trim());
     
-    contentChunks.forEach((chunk, index) => {
-      // Try to extract a topic from the first few words
-      const firstWords = chunk.split(' ').slice(0, 4).join(' ');
-      const cleanTitle = firstWords.replace(/[.!?]/g, '').trim();
+    sections.forEach((section, sectionIndex) => {
+      const lines = section.split('\n').filter(line => line.trim());
+      let currentCard = '';
+      let cardType: 'concept' | 'example' | 'tip' | 'definition' | 'practice' | 'summary' | 'code' = 'concept';
+      let cardTitle = '';
+      let codeBlocks: Array<{ language: string; code: string }> = [];
+      let inCodeBlock = false;
+      let currentCodeBlock = '';
+      let currentLanguage = '';
       
-      // If the title is too short or generic, use position-based titles
-      if (cleanTitle.length < 10) {
-        const positionTitles = [
-          'Temel Kavramlar',
-          'Detaylar',
-          'İleri Seviye',
-          'Uygulama',
-          'Derinlemesine İnceleme',
-          'Ek Bilgiler'
-        ];
-        titles.push(positionTitles[index % positionTitles.length]);
-      } else {
-        titles.push(cleanTitle.length > 35 ? cleanTitle.substring(0, 32) + '...' : cleanTitle);
+      lines.forEach((line, lineIndex) => {
+        const trimmedLine = line.trim();
+        
+        // Check for code block start
+        if (trimmedLine.startsWith('```')) {
+          if (inCodeBlock) {
+            // End of code block
+            if (currentCodeBlock.trim()) {
+              codeBlocks.push({
+                language: currentLanguage || 'text',
+                code: currentCodeBlock.trim()
+              });
+            }
+            currentCodeBlock = '';
+            currentLanguage = '';
+            inCodeBlock = false;
+          } else {
+            // Start of code block
+            inCodeBlock = true;
+            currentLanguage = trimmedLine.replace(/```/g, '').trim();
+            if (!currentLanguage) currentLanguage = 'text';
+          }
+          return;
+        }
+        
+        // If we're in a code block, collect code
+        if (inCodeBlock) {
+          currentCodeBlock += (currentCodeBlock ? '\n' : '') + line;
+          return;
+        }
+        
+        // Detect card type from content patterns
+        if (trimmedLine.includes('**Temel Prensipleri:**') || 
+            trimmedLine.includes('**Nasıl Çalışır?**') ||
+            trimmedLine.includes('**Nedir?**') ||
+            trimmedLine.includes('**Temel Kavramlar:**')) {
+          cardType = 'concept';
+          cardTitle = 'Temel Kavramlar';
+        } else if (trimmedLine.includes('**Örnek') || 
+                   trimmedLine.includes('**Gerçek Hayattan Örnek:**') ||
+                   trimmedLine.includes('**Pratik Örnek:**')) {
+          cardType = 'example';
+          cardTitle = 'Gerçek Hayat Örneği';
+        } else if (trimmedLine.includes('**Pro İpuçları:**') || 
+                   trimmedLine.includes('**İpuçları:**') ||
+                   trimmedLine.includes('**Tavsiye:**')) {
+          cardType = 'tip';
+          cardTitle = 'Uzman İpuçları';
+        } else if (trimmedLine.includes('**Tanım:**') || 
+                   trimmedLine.includes('**Açıklama:**')) {
+          cardType = 'definition';
+          cardTitle = 'Detaylı Tanım';
+        } else if (trimmedLine.includes('**Alıştırma:**') || 
+                   trimmedLine.includes('**Pratik:**') ||
+                   trimmedLine.includes('**Deneme:**')) {
+          cardType = 'practice';
+          cardTitle = 'Pratik Uygulama';
+        } else if (trimmedLine.includes('**Özet:**') || 
+                   trimmedLine.includes('**Sonuç:**') ||
+                   trimmedLine.includes('**Önemli Noktalar:**')) {
+          cardType = 'summary';
+          cardTitle = 'Özet';
+        } else if (trimmedLine.includes('**') && trimmedLine.includes('**') && 
+                   (trimmedLine.includes('Repository') || 
+                    trimmedLine.includes('Değişiklik') || 
+                    trimmedLine.includes('Branch') || 
+                    trimmedLine.includes('Sunucu') ||
+                    trimmedLine.includes('Komut') ||
+                    trimmedLine.includes('Kod'))) {
+          // Technical/Code related headers
+          cardType = 'code';
+          cardTitle = trimmedLine.replace(/[:\*\s]+$/, '').trim();
+        } else if (trimmedLine.endsWith(':')) {
+          // Generic header - try to extract meaningful title
+          const headerText = trimmedLine.replace(/[:\*\s]+$/, '').trim();
+          if (headerText.length > 3) {
+            cardTitle = headerText;
+          }
+        } else if (trimmedLine.length > 0) {
+          // Regular content line
+          currentCard += (currentCard ? '\n' : '') + trimmedLine;
+        }
+      });
+      
+      // Create card if we have content or code blocks
+      if (currentCard.trim() || codeBlocks.length > 0) {
+        // If no specific title found, generate one based on content
+        if (!cardTitle) {
+          const firstWords = currentCard.split(' ').slice(0, 4).join(' ');
+          cardTitle = firstWords.length > 20 ? firstWords.substring(0, 17) + '...' : firstWords;
+        }
+        
+        // Clean content (remove markdown)
+        const cleanContent = currentCard.replace(/\*\*/g, '').trim();
+        
+        // Get card styling
+        const cardConfig = getCardConfig(cardType, theme);
+        
+        cards.push({
+          type: cardType,
+          title: cardTitle,
+          content: cleanContent,
+          icon: cardConfig.icon,
+          color: cardConfig.color,
+          codeBlocks: codeBlocks.length > 0 ? codeBlocks : undefined,
+        });
+        
+        // Reset for next card
+        currentCard = '';
+        cardType = 'concept';
+        cardTitle = '';
+        codeBlocks = [];
       }
     });
     
-    return titles;
-  }, [contentChunks]);
+    // If no structured cards found, create basic ones from content
+    if (cards.length === 0) {
+      const sentences = fullContent.replace(/\*\*/g, '').split(/[.!?]+/).filter(s => s.trim().length > 10);
+      const chunkSize = Math.ceil(sentences.length / 4); // Max 4 cards
+      
+      for (let i = 0; i < sentences.length; i += chunkSize) {
+        const chunk = sentences.slice(i, i + chunkSize).join('. ').trim();
+        if (chunk) {
+          const firstWords = chunk.split(' ').slice(0, 4).join(' ');
+          const cardConfig = getCardConfig('concept', theme);
+          cards.push({
+            type: 'concept',
+            title: firstWords.length > 20 ? firstWords.substring(0, 17) + '...' : firstWords,
+            content: chunk,
+            icon: cardConfig.icon,
+            color: cardConfig.color,
+          });
+        }
+      }
+    }
+    
+    return cards;
+  }, [skill.content, skill.summary, theme.primary]);
+
+
+
+  // Filter cards based on selected type
+  const filteredCards = React.useMemo(() => {
+    if (selectedCardType === 'all') {
+      return contentCards;
+    }
+    return contentCards.filter(card => card.type === selectedCardType);
+  }, [contentCards, selectedCardType]);
+
+
+  // Get available card types for filtering
+  const availableCardTypes = React.useMemo(() => {
+    const types = [...new Set(contentCards.map(card => card.type))];
+    return [
+      { type: 'all', label: 'Tümü', icon: '📚', count: contentCards.length },
+      ...types.map(type => {
+        const cardConfig = getCardConfig(type, theme);
+        return {
+          type,
+          label: type.charAt(0).toUpperCase() + type.slice(1),
+          icon: cardConfig.icon,
+          count: contentCards.filter(card => card.type === type).length,
+        };
+      })
+    ];
+  }, [contentCards, theme]);
 
   // Generate engaging learning outcomes (max 5-6)
   const learningOutcomes = React.useMemo(() => {
@@ -361,28 +545,42 @@ export default function LessonScreen() {
       )
     });
 
-    // Steps 2-N: Content cards (each chunk becomes a separate step)
-    contentChunks.forEach((chunk, index) => {
+    // Steps 2-N: Content cards (each filtered card becomes a separate step)
+    filteredCards.forEach((card, index) => {
       const example = examples[index % examples.length];
-      const title = contentTitles[index];
       steps.push({
-        title: title,
-        icon: '📖',
+        title: card.title,
+        icon: card.icon,
         content: (
           <View style={styles.contentContainer}>
-            <Text style={[styles.contentStepTitle, { color: theme.text }]}>{title}</Text>
+            {/* Card Header */}
+            <View style={[styles.cardHeader, { backgroundColor: card.color + '15', borderColor: card.color + '40' }]}>
+              <Text style={styles.cardIcon}>{card.icon}</Text>
+              <View style={styles.cardHeaderText}>
+                <Text style={[styles.cardType, { color: card.color }]}>
+                  {card.type.charAt(0).toUpperCase() + card.type.slice(1)}
+                </Text>
+                <Text style={[styles.cardTitle, { color: theme.text }]}>{card.title}</Text>
+              </View>
             <Text style={[styles.cardCounter, { color: theme.textSecondary }]}>
-              Kart {index + 1} / {contentChunks.length}
+                {index + 1}/{contentCards.length}
             </Text>
+            </View>
             
-            <View style={styles.contentTextContainer}>
-              {renderFormattedText(chunk, theme)}
+            {/* Card Content */}
+            <View style={styles.cardContentContainer}>
+              {renderFormattedText(card.content, theme, card.codeBlocks)}
             </View>
 
-            {/* Example Badge */}
-            <View style={[styles.exampleBadge, { backgroundColor: theme.accent + '15' }]}>
-              <Text style={[styles.exampleIcon, { color: theme.accent }]}>💡</Text>
-              <Text style={[styles.exampleText, { color: theme.text }]}>{example}</Text>
+            {/* Action Badge */}
+            <View style={[styles.actionBadge, { backgroundColor: card.color + '10' }]}>
+              <Text style={[styles.actionIcon, { color: card.color }]}>
+                {card.type === 'example' ? '💡' : 
+                 card.type === 'tip' ? '✨' : 
+                 card.type === 'practice' ? '🏋️' : 
+                 card.type === 'code' ? '💻' : '📖'}
+              </Text>
+              <Text style={[styles.actionText, { color: theme.text }]}>{example}</Text>
             </View>
           </View>
         )
@@ -443,7 +641,7 @@ export default function LessonScreen() {
     });
 
     return steps;
-  }, [skill, theme, categoryEmoji, contentChunks, contentTitles, learningOutcomes]);
+  }, [skill, theme, categoryEmoji, filteredCards, learningOutcomes]);
   
   const totalSteps = lessonSteps.length;
   
@@ -519,6 +717,69 @@ export default function LessonScreen() {
             <Text style={[styles.progressText, { color: theme.textSecondary }]}>
               Adım {currentStep + 1} / {totalSteps} {lessonSteps[currentStep].icon}
             </Text>
+        </Animated.View>
+
+          {/* Category Filter Tabs */}
+          <Animated.View entering={FadeInDown.delay(200)} style={styles.categoryTabsContainer}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryTabsScroll}
+            >
+              {availableCardTypes.map((cardType) => (
+                <TouchableOpacity
+                  key={cardType.type}
+                  style={[
+                    styles.categoryTab,
+                    {
+                      backgroundColor: selectedCardType === cardType.type 
+                        ? theme.primary + '20' 
+                        : theme.surface,
+                      borderColor: selectedCardType === cardType.type 
+                        ? theme.primary 
+                        : theme.border,
+                    }
+                  ]}
+                  onPress={() => {
+                    setSelectedCardType(cardType.type);
+                    setCurrentStep(0); // Reset to first step when changing filter
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.categoryTabIcon}>{cardType.icon}</Text>
+                  <Text style={[
+                    styles.categoryTabLabel,
+                    { 
+                      color: selectedCardType === cardType.type 
+                        ? theme.primary 
+                        : theme.text 
+                    }
+                  ]}>
+                    {cardType.label}
+                  </Text>
+                  <View style={[
+                    styles.categoryTabCount,
+                    { 
+                      backgroundColor: selectedCardType === cardType.type 
+                        ? theme.primary 
+                        : theme.backgroundTertiary 
+                    }
+                  ]}>
+                    <Text style={[
+                      styles.categoryTabCountText,
+                      { 
+                        color: selectedCardType === cardType.type 
+                          ? theme.textInverted 
+                          : theme.textSecondary 
+                      }
+                    ]}>
+                      {cardType.count}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
         </Animated.View>
 
           {/* Step Content Card - NO SCROLL, content fits perfectly */}
@@ -695,28 +956,113 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Content Section (new clean version)
+  // Enhanced Card System Styles
   contentContainer: {
     flex: 1,
     justifyContent: 'space-between',
   },
-  contentStepTitle: {
+  
+  // Card Header
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 2,
+    marginBottom: spacing.lg,
+  },
+  cardIcon: {
     fontSize: 24,
-    fontWeight: '900',
-    marginBottom: spacing.xs,
-    lineHeight: 32,
-    textAlign: 'center',
+    marginRight: spacing.md,
+  },
+  cardHeaderText: {
+    flex: 1,
+  },
+  cardType: {
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    lineHeight: 24,
   },
   cardCounter: {
     fontSize: 12,
     fontWeight: '600',
-    marginBottom: spacing.xl,
-    textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  contentTextContainer: {
+  
+  // Card Content
+  cardContentContainer: {
     flex: 1,
     justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  
+  // Action Badge
+  actionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    marginTop: spacing.md,
+  },
+  actionIcon: {
+    fontSize: 16,
+    marginRight: spacing.sm,
+  },
+  actionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontStyle: 'italic',
+  },
+
+  // Category Filter Tabs
+  categoryTabsContainer: {
+    marginBottom: spacing.md,
+  },
+  categoryTabsScroll: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  categoryTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.full,
+    borderWidth: 2,
+    minWidth: 100,
+    ...shadows.sm,
+  },
+  categoryTabIcon: {
+    fontSize: 16,
+    marginRight: spacing.xs,
+  },
+  categoryTabLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  categoryTabCount: {
+    marginLeft: spacing.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  categoryTabCountText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   contentSection: {
     borderRadius: radii.lg,

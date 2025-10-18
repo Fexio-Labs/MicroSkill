@@ -38,7 +38,13 @@ export default function SkillCard({ skill, isPremium = false, onPress }: SkillCa
         styles.card, 
         { backgroundColor: theme.surface, borderColor: theme.border },
         animatedStyle,
-        isPremium && [styles.cardPremium, { borderColor: theme.premium }],
+        isPremium && [
+          styles.cardPremium, 
+          { 
+            borderColor: theme.premium,
+            backgroundColor: theme.premiumLight + '20'
+          }
+        ],
         !hasAccess && [styles.cardLocked, { backgroundColor: theme.backgroundTertiary }]
       ]} 
       activeOpacity={hasAccess ? 1 : 0.6}
@@ -126,7 +132,6 @@ const styles = StyleSheet.create<Styles>({
     borderWidth: 1,
     overflow: 'hidden',
     position: 'relative',
-    ...shadows.md,
   },
   cardPremium: {
     borderWidth: 2,
@@ -142,10 +147,6 @@ const styles = StyleSheet.create<Styles>({
     paddingHorizontal: 40,
     transform: [{ rotate: '45deg' }],
     zIndex: 10,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 5,
   },
   premiumRibbonText: {
     fontSize: 11,
@@ -161,10 +162,6 @@ const styles = StyleSheet.create<Styles>({
     paddingHorizontal: 40,
     transform: [{ rotate: '45deg' }],
     zIndex: 10,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 5,
   },
   premiumRibbonTextUnlocked: {
     fontSize: 11,

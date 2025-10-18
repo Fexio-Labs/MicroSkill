@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,7 +18,7 @@ type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 export default function HomeScreen() {
   const navigation = useNavigation<HomeNavigationProp>();
   const { score, level, getTodaysSkill, streak, completedSkills } = useSkillContext();
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { theme } = useTheme();
   
   // Günün Becerisi - Her gün farklı bir skill
   const todaysSkill = getTodaysSkill();
@@ -44,20 +43,6 @@ export default function HomeScreen() {
       style={styles.gradientContainer}
     >
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-        {/* Theme Toggle Button */}
-        <View style={styles.headerContainer}>
-          <TouchableOpacity 
-            onPress={toggleTheme}
-            style={[styles.themeButton, { backgroundColor: theme.surface }]}
-            activeOpacity={0.7}
-          >
-            <Ionicons 
-              name={isDark ? 'sunny' : 'moon'} 
-              size={20} 
-              color={theme.primary} 
-            />
-          </TouchableOpacity>
-        </View>
         
         <ScrollView 
           style={styles.scrollView}
@@ -227,26 +212,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Header with theme button
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.xs,
-  },
-  themeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
 
   // Progress Info
   progressInfo: {
@@ -265,3 +230,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

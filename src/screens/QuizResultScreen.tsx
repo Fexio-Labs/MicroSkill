@@ -7,7 +7,8 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSkillContext } from '../hooks/useSkillContext';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, radii, shadows, spacing } from '../styles/theme';
+import { radii, shadows, spacing } from '../styles/theme';
+import { useTheme } from '../hooks/useTheme';
 
 type QuizResultRoute = RouteProp<RootStackParamList, 'QuizResult'>;
 type QuizResultNavigationProp = NativeStackNavigationProp<RootStackParamList, 'QuizResult'>;
@@ -16,6 +17,7 @@ export default function QuizResultScreen() {
   const { params } = useRoute<QuizResultRoute>();
   const navigation = useNavigation<QuizResultNavigationProp>();
   const { score, level, completedSkills, streak } = useSkillContext();
+  const { theme } = useTheme();
 
   // Quiz sonuç bilgileri
   const earnedPoints = params?.earnedPoints ?? 0;
@@ -28,84 +30,97 @@ export default function QuizResultScreen() {
 
   return (
     <LinearGradient
-      colors={[colors.background, colors.backgroundSecondary]}
+      colors={[theme.background, theme.backgroundSecondary]}
       style={styles.gradientContainer}
     >
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.container}>
         {/* Success Animation */}
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.successIcon}>
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={[styles.successIcon, {
+          backgroundColor: theme.successLight + '30',
+          borderColor: theme.success,
+        }]}>
           <Text style={styles.emoji}>🎉</Text>
         </Animated.View>
 
         {/* Title */}
         <Animated.View entering={FadeInDown.delay(200)} style={styles.titleContainer}>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: theme.text }]}>
             {successRate === 100 ? 'Mükemmel!' : successRate >= 50 ? 'Harika İş!' : 'İyi Deneme!'}
           </Text>
-          <Text style={styles.subtitle}>"{skillTitle}" quiz'ini tamamladın 🚀</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>"{skillTitle}" quiz'ini tamamladın 🚀</Text>
         </Animated.View>
 
         {/* Quiz Sonuç Kartı */}
-        <Animated.View entering={FadeInDown.delay(250)} style={styles.quizResultCard}>
+        <Animated.View entering={FadeInDown.delay(250)} style={[styles.quizResultCard, {
+          backgroundColor: theme.surface,
+          borderColor: theme.primary,
+          shadowColor: theme.primary,
+        }]}>
           <View style={styles.quizResultHeader}>
-            <Text style={styles.quizResultTitle}>Quiz Sonuçları</Text>
+            <Text style={[styles.quizResultTitle, { color: theme.text }]}>Quiz Sonuçları</Text>
           </View>
           <View style={styles.quizResultStats}>
             <View style={styles.quizResultItem}>
-              <Text style={styles.quizResultValue}>{correctAnswers}/{totalQuestions}</Text>
-              <Text style={styles.quizResultLabel}>Doğru Cevap</Text>
+              <Text style={[styles.quizResultValue, { color: theme.text }]}>{correctAnswers}/{totalQuestions}</Text>
+              <Text style={[styles.quizResultLabel, { color: theme.textSecondary }]}>Doğru Cevap</Text>
             </View>
-            <View style={styles.quizResultDivider} />
+            <View style={[styles.quizResultDivider, { backgroundColor: theme.border }]} />
             <View style={styles.quizResultItem}>
-              <Text style={[styles.quizResultValue, styles.pointsValue]}>+{earnedPoints}</Text>
-              <Text style={styles.quizResultLabel}>Kazanılan Puan</Text>
+              <Text style={[styles.quizResultValue, { color: theme.success }]}>+{earnedPoints}</Text>
+              <Text style={[styles.quizResultLabel, { color: theme.textSecondary }]}>Kazanılan Puan</Text>
             </View>
-            <View style={styles.quizResultDivider} />
+            <View style={[styles.quizResultDivider, { backgroundColor: theme.border }]} />
             <View style={styles.quizResultItem}>
-              <Text style={[styles.quizResultValue, styles.successValue]}>{successRate}%</Text>
-              <Text style={styles.quizResultLabel}>Başarı Oranı</Text>
+              <Text style={[styles.quizResultValue, { color: theme.primary }]}>{successRate}%</Text>
+              <Text style={[styles.quizResultLabel, { color: theme.textSecondary }]}>Başarı Oranı</Text>
             </View>
           </View>
         </Animated.View>
 
         {/* Stats Cards - Genel İstatistikler */}
         <Animated.View entering={FadeInDown.delay(350)} style={styles.statsContainer}>
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <Text style={styles.statEmoji}>⭐</Text>
-            <Text style={styles.statValue}>{score}</Text>
-            <Text style={styles.statLabel}>Toplam Puan</Text>
+            <Text style={[styles.statValue, { color: theme.primary }]}>{score}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Toplam Puan</Text>
             {earnedPoints > 0 && (
-              <Text style={styles.statChange}>+{earnedPoints}</Text>
+              <Text style={[styles.statChange, { color: theme.success }]}>+{earnedPoints}</Text>
             )}
           </View>
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <Text style={styles.statEmoji}>📊</Text>
-            <Text style={styles.statValue}>{level}</Text>
-            <Text style={styles.statLabel}>Seviye</Text>
+            <Text style={[styles.statValue, { color: theme.primary }]}>{level}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Seviye</Text>
           </View>
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <Text style={styles.statEmoji}>🔥</Text>
-            <Text style={styles.statValue}>{streak}</Text>
-            <Text style={styles.statLabel}>Günlük Seri</Text>
+            <Text style={[styles.statValue, { color: theme.primary }]}>{streak}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Günlük Seri</Text>
           </View>
         </Animated.View>
 
         {/* Progress Info */}
-        <Animated.View entering={FadeInDown.delay(450)} style={styles.progressCard}>
-          <Text style={styles.progressTitle}>🎯 İlerleme Durumun</Text>
-          <Text style={styles.progressText}>
+        <Animated.View entering={FadeInDown.delay(450)} style={[styles.progressCard, {
+          backgroundColor: theme.primaryLight + '20',
+          borderColor: theme.primaryLight + '40',
+        }]}>
+          <Text style={[styles.progressTitle, { color: theme.text }]}>🎯 İlerleme Durumun</Text>
+          <Text style={[styles.progressText, { color: theme.textSecondary }]}>
             {completedSkills.length} beceri tamamladın
           </Text>
-          <View style={styles.progressBar}>
+          <View style={[styles.progressBar, { backgroundColor: theme.backgroundDark }]}>
             <View 
               style={[
                 styles.progressFill, 
-                { width: `${Math.min((completedSkills.length / 12) * 100, 100)}%` }
+                { 
+                  width: `${Math.min((completedSkills.length / 12) * 100, 100)}%`,
+                  backgroundColor: theme.primary,
+                }
               ]} 
             />
           </View>
-          <Text style={styles.progressSubtext}>
+          <Text style={[styles.progressSubtext, { color: theme.textSecondary }]}>
             Tüm becerileri tamamlamaya devam et!
           </Text>
         </Animated.View>
@@ -113,22 +128,28 @@ export default function QuizResultScreen() {
         {/* Action Buttons */}
         <Animated.View entering={FadeInUp.delay(550)} style={styles.actionsContainer}>
           <TouchableOpacity
-            style={styles.primaryButton}
+            style={[styles.primaryButton, { 
+              backgroundColor: theme.primary,
+              shadowColor: theme.primary,
+            }]}
             onPress={() => navigation.navigate('Home')}
           >
-            <Text style={styles.primaryButtonText}>Ana Sayfaya Dön</Text>
+            <Text style={[styles.primaryButtonText, { color: theme.textInverted }]}>Ana Sayfaya Dön</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.secondaryButton}
+            style={[styles.secondaryButton, { 
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+            }]}
             onPress={() => navigation.navigate('Level')}
           >
-            <Text style={styles.secondaryButtonText}>Seviyelerimi Gör</Text>
+            <Text style={[styles.secondaryButtonText, { color: theme.primary }]}>Seviyelerimi Gör</Text>
           </TouchableOpacity>
         </Animated.View>
 
         {/* Motivational Message */}
         <Animated.View entering={FadeInUp.delay(650)} style={styles.messageContainer}>
-          <Text style={styles.messageText}>
+          <Text style={[styles.messageText, { color: theme.textSecondary }]}>
             💪 "Küçük adımlarla büyük başarılara ulaşırsın!"
           </Text>
         </Animated.View>
@@ -159,12 +180,10 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: colors.successLight + '30',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xl,
     borderWidth: 3,
-    borderColor: colors.success,
     ...shadows.lg,
   },
   emoji: {
@@ -179,14 +198,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.textSecondary,
     textAlign: 'center',
   },
 
@@ -199,12 +216,10 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
     ...shadows.md,
   },
   statEmoji: {
@@ -214,32 +229,26 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 28,
     fontWeight: '900',
-    color: colors.primary,
     marginBottom: spacing.xs,
   },
   statLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   statChange: {
     fontSize: 14,
     fontWeight: '800',
-    color: colors.success,
     marginTop: 4,
   },
 
   // Quiz Result Card
   quizResultCard: {
     width: '100%',
-    backgroundColor: colors.surface,
     borderRadius: radii.xxl,
     padding: spacing.xl,
     marginBottom: spacing.lg,
     borderWidth: 2,
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
@@ -252,7 +261,6 @@ const styles = StyleSheet.create({
   quizResultTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.text,
   },
   quizResultStats: {
     flexDirection: 'row',
@@ -266,68 +274,56 @@ const styles = StyleSheet.create({
   quizResultValue: {
     fontSize: 32,
     fontWeight: '900',
-    color: colors.text,
     marginBottom: 4,
   },
   pointsValue: {
-    color: colors.success,
   },
   successValue: {
-    color: colors.primary,
   },
   quizResultLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textSecondary,
     textAlign: 'center',
   },
   quizResultDivider: {
     width: 1,
     height: 40,
-    backgroundColor: colors.border,
     marginHorizontal: spacing.sm,
   },
 
   // Progress
   progressCard: {
     width: '100%',
-    backgroundColor: colors.primaryLight + '20',
     borderRadius: radii.xl,
     padding: spacing.lg,
     marginBottom: spacing.xl,
     borderWidth: 2,
-    borderColor: colors.primaryLight + '40',
     ...shadows.sm,
   },
   progressTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   progressText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.md,
   },
   progressBar: {
     height: 10,
-    backgroundColor: colors.backgroundDark,
     borderRadius: 5,
     overflow: 'hidden',
     marginBottom: spacing.sm,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.primary,
     borderRadius: 5,
   },
   progressSubtext: {
     fontSize: 13,
-    color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -339,11 +335,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
     borderRadius: radii.lg,
     paddingVertical: spacing.lg,
     alignItems: 'center',
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -352,21 +346,17 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.textInverted,
   },
   secondaryButton: {
-    backgroundColor: colors.surface,
     borderRadius: radii.lg,
     paddingVertical: spacing.lg,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.border,
     ...shadows.sm,
   },
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.primary,
   },
 
   // Message
@@ -376,7 +366,6 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.textSecondary,
     textAlign: 'center',
     fontStyle: 'italic',
   },

@@ -1,8 +1,11 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import AnimatedTabBar from '../components/AnimatedTabBar';
 import { useTheme } from '../hooks/useTheme';
+import { radii, shadows, spacing } from '../styles/theme';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LanguageSettingsScreen from '../screens/LanguageSettingsScreen';
@@ -46,6 +49,36 @@ export type TabParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
+// Theme Toggle Component
+function ThemeToggle() {
+  const { theme, toggleTheme, isDark } = useTheme();
+  
+  return (
+    <TouchableOpacity 
+      onPress={toggleTheme}
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: theme.surface,
+        borderColor: theme.border,
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: spacing.sm,
+        ...shadows.sm,
+      }}
+      activeOpacity={0.7}
+    >
+      <Ionicons 
+        name={isDark ? 'sunny' : 'moon'} 
+        size={20} 
+        color={theme.primary} 
+      />
+    </TouchableOpacity>
+  );
+}
+
 // Home Stack
 function HomeStack() {
   const { theme } = useTheme();
@@ -56,7 +89,7 @@ function HomeStack() {
     },
     headerTintColor: theme.primary,
     headerTitleStyle: {
-      fontWeight: '800',
+      fontWeight: '800' as const,
       fontSize: 18,
       color: theme.text,
     },
@@ -79,6 +112,7 @@ function HomeStack() {
         options={{
           title: '🎓 MicroSkill',
           headerLargeTitle: false,
+          headerRight: () => <ThemeToggle />,
         }}
       />
       <Stack.Screen 
@@ -138,7 +172,7 @@ function SkillsStack() {
     },
     headerTintColor: theme.primary,
     headerTitleStyle: {
-      fontWeight: '800',
+      fontWeight: '800' as const,
       fontSize: 18,
       color: theme.text,
     },
@@ -215,7 +249,7 @@ function PremiumStack() {
     },
     headerTintColor: theme.primary,
     headerTitleStyle: {
-      fontWeight: '800',
+      fontWeight: '800' as const,
       fontSize: 18,
       color: theme.text,
     },
@@ -293,7 +327,7 @@ function ProfileStack() {
     },
     headerTintColor: theme.primary,
     headerTitleStyle: {
-      fontWeight: '800',
+      fontWeight: '800' as const,
       fontSize: 18,
       color: theme.text,
     },

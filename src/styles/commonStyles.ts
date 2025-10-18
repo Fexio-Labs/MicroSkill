@@ -51,7 +51,6 @@ export const cards = StyleSheet.create({
     padding: spacing.lg,
     borderWidth: 2,
     borderColor: colors.premium,
-    ...shadows.md,
   } as ViewStyle,
   
   success: {
@@ -171,11 +170,6 @@ export const buttons = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.premium,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   } as ViewStyle,
 });
 

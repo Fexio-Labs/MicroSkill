@@ -17,7 +17,8 @@ import Animated, {
     useSharedValue,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radii, spacing } from '../styles/theme';
+import { radii, spacing } from '../styles/theme';
+import { useTheme } from '../hooks/useTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -29,27 +30,27 @@ type OnboardingSlide = {
   gradient: string[];
 };
 
-const slides: OnboardingSlide[] = [
+const getSlides = (theme: any): OnboardingSlide[] => [
   {
     id: '1',
     emoji: '🎓',
     title: 'MicroSkill\'e Hoşgeldin',
     description: 'Her gün 5 dakikada yeni bir beceri öğren. Küçük adımlarla büyük başarılara ulaş!',
-    gradient: [colors.primary, colors.primaryDark],
+    gradient: [theme.primary, theme.primaryDark],
   },
   {
     id: '2',
     emoji: '⚡',
     title: 'Hızlı ve Etkili',
     description: 'Kısa dersler, interaktif quizler ve anında geri bildirimle öğrenmeyi eğlenceli hale getir.',
-    gradient: [colors.accent, colors.accentDark],
+    gradient: [theme.accent, theme.accentDark],
   },
   {
     id: '3',
     emoji: '🚀',
     title: 'Hadi Başlayalım!',
     description: 'Puan kazan, seviye atla ve beceri portföyünü genişlet. Hazır mısın?',
-    gradient: [colors.secondary, colors.secondaryDark],
+    gradient: [theme.secondary, theme.secondaryDark],
   },
 ];
 
@@ -60,9 +61,11 @@ type OnboardingScreenProps = {
 };
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
+  const { theme } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useSharedValue(0);
+  const slides = getSlides(theme);
 
   const handleSkip = async () => {
     await AsyncStorage.setItem(STORAGE_KEY, 'true');
@@ -90,7 +93,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'bottom']}>
       <FlatList
         ref={flatListRef}
         data={slides}
@@ -108,6 +111,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             item={item}
             index={index}
             scrollX={scrollX}
+            theme={theme}
           />
         )}
         keyExtractor={(item) => item.id}
@@ -116,11 +120,14 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       {/* Skip Button */}
       {currentIndex < slides.length - 1 && (
         <TouchableOpacity
-          style={styles.skipButton}
+          style={[styles.skipButton, {
+            backgroundColor: theme.surface,
+            borderColor: theme.border,
+          }]}
           onPress={handleSkip}
           activeOpacity={0.8}
         >
-          <Text style={styles.skipText}>Atla</Text>
+          <Text style={[styles.skipText, { color: theme.textSecondary }]}>Atla</Text>
         </TouchableOpacity>
       )}
 
@@ -156,7 +163,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             return (
               <Animated.View
                 key={index}
-                style={[styles.dot, dotStyle]}
+                style={[styles.dot, { backgroundColor: theme.primary }, dotStyle]}
               />
             );
           })}
@@ -164,11 +171,14 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 
         {/* Next Button */}
         <TouchableOpacity
-          style={styles.nextButton}
+          style={[styles.nextButton, {
+            backgroundColor: theme.primary,
+            shadowColor: theme.primary,
+          }]}
           onPress={handleNext}
           activeOpacity={0.9}
         >
-          <Text style={styles.nextButtonText}>
+          <Text style={[styles.nextButtonText, { color: theme.textInverted }]}>
             {currentIndex === slides.length - 1 ? 'Başla 🚀' : 'Devam →'}
           </Text>
         </TouchableOpacity>
@@ -181,9 +191,10 @@ type SlideItemProps = {
   item: OnboardingSlide;
   index: number;
   scrollX: Animated.SharedValue<number>;
+  theme: any;
 };
 
-function SlideItem({ item, index, scrollX }: SlideItemProps) {
+function SlideItem({ item, index, scrollX, theme }: SlideItemProps) {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = [
       (index - 1) * SCREEN_WIDTH,
@@ -221,8 +232,8 @@ function SlideItem({ item, index, scrollX }: SlideItemProps) {
           {item.emoji}
         </Animated.Text>
       </LinearGradient>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.description}>{item.description}</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{item.title}</Text>
+      <Text style={[styles.description, { color: theme.textSecondary }]}>{item.description}</Text>
     </View>
   );
 }
@@ -230,7 +241,6 @@ function SlideItem({ item, index, scrollX }: SlideItemProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
 
   // Slide
@@ -260,7 +270,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '900',
-    color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.lg,
     lineHeight: 40,
@@ -268,7 +277,6 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: spacing.md,
@@ -281,15 +289,12 @@ const styles = StyleSheet.create({
     right: spacing.xl,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
     borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   skipText: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textSecondary,
   },
 
   // Bottom Container
@@ -309,16 +314,13 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.primary,
   },
 
   // Next Button
   nextButton: {
-    backgroundColor: colors.primary,
     paddingVertical: spacing.xl,
     borderRadius: radii.xl,
     alignItems: 'center',
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
@@ -327,7 +329,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 18,
     fontWeight: '900',
-    color: colors.textInverted,
     letterSpacing: 0.5,
   },
 });

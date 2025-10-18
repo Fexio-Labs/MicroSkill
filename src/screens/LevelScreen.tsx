@@ -4,10 +4,12 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSkillContext } from '../hooks/useSkillContext';
-import { colors, radii, shadows, spacing } from '../styles/theme';
+import { radii, shadows, spacing } from '../styles/theme';
+import { useTheme } from '../hooks/useTheme';
 
 const LevelScreen: React.FC = () => {
   const { level, score, completedSkills, streak } = useSkillContext();
+  const { theme } = useTheme();
 
   const scoreToNextLevel = 20;
   const currentLevelMinScore = (level - 1) * scoreToNextLevel;
@@ -22,7 +24,7 @@ const LevelScreen: React.FC = () => {
 
   return (
     <LinearGradient
-      colors={[colors.background, colors.backgroundSecondary]}
+      colors={[theme.background, theme.backgroundSecondary]}
       style={styles.gradientContainer}
     >
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -130,28 +132,23 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: colors.text,
     marginBottom: spacing.xs,
   },
   headerSubtitle: {
     fontSize: 15,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
 
   // Level Card
   levelCard: {
-    backgroundColor: colors.surface,
     borderRadius: radii.xxl,
     padding: spacing.xl,
     marginBottom: spacing.xl,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
     ...shadows.lg,
   },
   levelBadge: {
-    backgroundColor: colors.primaryLight + '30',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xs,
     borderRadius: 12,
@@ -160,17 +157,14 @@ const styles = StyleSheet.create({
   levelBadgeText: {
     fontSize: 13,
     fontWeight: '800',
-    color: colors.primary,
   },
   levelCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
@@ -179,12 +173,10 @@ const styles = StyleSheet.create({
   levelNumber: {
     fontSize: 56,
     fontWeight: '900',
-    color: colors.textInverted,
   },
   levelLabel: {
     fontSize: 20,
     fontWeight: '800',
-    color: colors.text,
     marginBottom: spacing.xl,
   },
   progressSection: {
@@ -193,26 +185,22 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   progressBarContainer: {
     height: 12,
     width: '100%',
-    backgroundColor: colors.backgroundDark,
     borderRadius: 6,
     overflow: 'hidden',
     marginBottom: spacing.xs,
   },
   progressBar: {
     height: '100%',
-    backgroundColor: colors.secondary,
     borderRadius: 6,
   },
   progressText: {
     fontSize: 13,
-    color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -225,12 +213,10 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
     ...shadows.sm,
   },
   statEmoji: {
@@ -240,13 +226,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '900',
-    color: colors.primary,
     marginBottom: spacing.xs,
   },
   statLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.textSecondary,
     textAlign: 'center',
   },
 
@@ -257,7 +241,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: colors.text,
     marginBottom: spacing.lg,
   },
   achievementsList: {
@@ -267,17 +250,14 @@ const styles = StyleSheet.create({
   },
   achievementCard: {
     width: '48%',
-    backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.lg,
     alignItems: 'center',
     opacity: 0.5,
     borderWidth: 2,
-    borderColor: colors.border,
   },
   achievementUnlocked: {
     opacity: 1,
-    borderColor: colors.accent,
     ...shadows.md,
   },
   achievementIcon: {
@@ -287,12 +267,10 @@ const styles = StyleSheet.create({
   achievementText: {
     fontSize: 14,
     fontWeight: '800',
-    color: colors.text,
     marginBottom: spacing.xs,
   },
   achievementDesc: {
     fontSize: 11,
-    color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '600',
   },
