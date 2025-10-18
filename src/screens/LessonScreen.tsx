@@ -1219,9 +1219,11 @@ const styles = StyleSheet.create({
   },
   prevButton: {
     borderWidth: 2,
+    width: '50%',
   },
   nextButton: {
     flex: 1,
+    width: '50%',
   },
   navButtonText: {
     fontSize: 16,
