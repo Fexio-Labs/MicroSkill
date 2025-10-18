@@ -785,7 +785,7 @@ export default function LessonScreen() {
           {/* Step Content Card - NO SCROLL, content fits perfectly */}
           <Animated.View 
             key={currentStep}
-            entering={FadeInRight.duration(400).springify()}
+            entering={FadeInRight.duration(200).easing(Easing.out(Easing.cubic))}
             style={[styles.stepCard, { 
               backgroundColor: theme.surface,
               borderColor: theme.border 
