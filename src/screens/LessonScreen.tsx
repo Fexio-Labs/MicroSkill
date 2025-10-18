@@ -330,8 +330,8 @@ export default function LessonScreen() {
       if (currentCard.trim() || codeBlocks.length > 0) {
         // If no specific title found, generate one based on content
         if (!cardTitle) {
-          const firstWords = currentCard.split(' ').slice(0, 4).join(' ');
-          cardTitle = firstWords.length > 20 ? firstWords.substring(0, 17) + '...' : firstWords;
+          const firstWords = currentCard.split(' ').slice(0, 6).join(' ');
+          cardTitle = firstWords;
         }
         
         // Clean content (remove markdown)
@@ -365,11 +365,11 @@ export default function LessonScreen() {
       for (let i = 0; i < sentences.length; i += chunkSize) {
         const chunk = sentences.slice(i, i + chunkSize).join('. ').trim();
         if (chunk) {
-          const firstWords = chunk.split(' ').slice(0, 4).join(' ');
+          const firstWords = chunk.split(' ').slice(0, 6).join(' ');
           const cardConfig = getCardConfig('concept', theme);
           cards.push({
             type: 'concept',
-            title: firstWords.length > 20 ? firstWords.substring(0, 17) + '...' : firstWords,
+            title: firstWords,
             content: chunk,
             icon: cardConfig.icon,
             color: cardConfig.color,
@@ -1041,7 +1041,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     borderWidth: 2,
     minWidth: 100,
-    ...shadows.sm,
+    ...shadows.md,
   },
   categoryTabIcon: {
     fontSize: 16,
