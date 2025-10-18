@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.xs,
     right: spacing.xs,
-    opacity: 0.3,
+    opacity: 0.7,
   },
   statIcon: {
     fontSize: 20,
