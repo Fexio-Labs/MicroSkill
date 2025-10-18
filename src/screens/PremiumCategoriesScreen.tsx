@@ -73,48 +73,48 @@ export default function PremiumCategoriesScreen() {
         >
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(100)} style={styles.header}>
-          <Text style={styles.headerTitle}>💎 Premium Kategoriler</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>💎 Premium Kategoriler</Text>
+          <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
             İleri seviye becerilerle kendini geliştir
           </Text>
         </Animated.View>
 
         {/* Premium Info Card */}
-        <Animated.View entering={FadeInDown.delay(200)} style={styles.premiumInfoCard}>
+        <Animated.View entering={FadeInDown.delay(200)} style={[styles.premiumInfoCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <View style={styles.premiumInfoHeader}>
             <Text style={styles.premiumInfoEmoji}>✨</Text>
-            <Text style={styles.premiumInfoTitle}>Premium Avantajları</Text>
+            <Text style={[styles.premiumInfoTitle, { color: theme.text }]}>Premium Avantajları</Text>
           </View>
           <View style={styles.premiumFeatures}>
             <View style={styles.featureRow}>
-              <Text style={styles.featureBullet}>✓</Text>
-              <Text style={styles.featureText}>Yapay Zeka ve Startup içerikleri</Text>
+              <Text style={[styles.featureBullet, { color: theme.success }]}>✓</Text>
+              <Text style={[styles.featureText, { color: theme.text }]}>Yapay Zeka ve Startup içerikleri</Text>
             </View>
             <View style={styles.featureRow}>
-              <Text style={styles.featureBullet}>✓</Text>
-              <Text style={styles.featureText}>İleri seviye teknoloji becerileri</Text>
+              <Text style={[styles.featureBullet, { color: theme.success }]}>✓</Text>
+              <Text style={[styles.featureText, { color: theme.text }]}>İleri seviye teknoloji becerileri</Text>
             </View>
             <View style={styles.featureRow}>
-              <Text style={styles.featureBullet}>✓</Text>
-              <Text style={styles.featureText}>Reklamsız deneyim</Text>
+              <Text style={[styles.featureBullet, { color: theme.success }]}>✓</Text>
+              <Text style={[styles.featureText, { color: theme.text }]}>Reklamsız deneyim</Text>
             </View>
             <View style={styles.featureRow}>
-              <Text style={styles.featureBullet}>✓</Text>
-              <Text style={styles.featureText}>Her hafta yeni içerikler</Text>
+              <Text style={[styles.featureBullet, { color: theme.success }]}>✓</Text>
+              <Text style={[styles.featureText, { color: theme.text }]}>Her hafta yeni içerikler</Text>
             </View>
           </View>
           <TouchableOpacity 
-            style={styles.premiumButton}
+            style={[styles.premiumButton, { backgroundColor: theme.premium }]}
             onPress={() => navigation.navigate('Payment')}
             activeOpacity={0.9}
           >
-            <Text style={styles.premiumButtonText}>Premium'a Geç - ₺29.99/ay</Text>
+            <Text style={[styles.premiumButtonText, { color: theme.textInverted }]}>Premium'a Geç - ₺29.99/ay</Text>
           </TouchableOpacity>
         </Animated.View>
 
         {/* Category Filter */}
         <Animated.View entering={FadeInDown.delay(300)} style={styles.categorySection}>
-          <Text style={styles.categorySectionTitle}>Kategoriler</Text>
+          <Text style={[styles.categorySectionTitle, { color: theme.text }]}>Kategoriler</Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -130,14 +130,19 @@ export default function PremiumCategoriesScreen() {
                   key={category}
                   style={[
                     styles.categoryChip,
-                    isSelected && { backgroundColor: color, borderColor: color }
+                    { 
+                      backgroundColor: isSelected ? color : theme.surface,
+                      borderColor: isSelected ? color : theme.border
+                    }
                   ]}
                   onPress={() => setSelectedCategory(category as CategoryType | 'Tümü')}
                 >
                   <Text style={styles.categoryEmoji}>{emoji}</Text>
                   <Text style={[
                     styles.categoryChipText,
-                    isSelected && styles.categoryChipTextSelected
+                    { 
+                      color: isSelected ? theme.textInverted : theme.text 
+                    }
                   ]}>
                     {category}
                   </Text>
@@ -149,7 +154,7 @@ export default function PremiumCategoriesScreen() {
 
         {/* Skills List */}
         <Animated.View entering={FadeInDown.delay(400)} style={styles.skillsSection}>
-          <Text style={styles.skillsSectionTitle}>
+          <Text style={[styles.skillsSectionTitle, { color: theme.text }]}>
             {displayedSkills.length} Beceri
           </Text>
           {displayedSkills.map((skill, index) => (
